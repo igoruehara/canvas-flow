@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+!.env.*.example
+config.json
+.canvas-flow/
+
+# Logs
+*.log
+tmp-*.log

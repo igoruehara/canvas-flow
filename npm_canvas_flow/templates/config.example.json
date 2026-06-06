@@ -1,0 +1,204 @@
+{
+  "server": {
+    "port": 3333,
+    "publicUrl": "http://localhost:3333",
+    "enableSwagger": true,
+    "requestBodyLimit": "2mb",
+    "corsOrigins": [],
+    "openBrowser": false
+  },
+  "runtime": {
+    "nodeEnv": "production",
+    "timezone": "America/Sao_Paulo",
+    "logIsLambda": false,
+    "ssmPrefix": "",
+    "cronAutorun": true,
+    "cronScanMs": 30000,
+    "strictProduction": false,
+    "langGraphCheckpointNamespace": "canvas-flow-runtime-v1",
+    "langGraphCheckpointCollection": "canvas_langgraph_checkpoints",
+    "langGraphWritesCollection": "canvas_langgraph_checkpoint_writes",
+    "langGraphCheckpointTtlHours": 720,
+    "langGraphCheckpointIndexRetryAttempts": 3,
+    "langGraphCheckpointIndexRetryDelayMs": 250,
+    "maxParallelNodes": 50,
+    "maxStepVisits": 10,
+    "providerCacheMs": 10000
+  },
+  "aws": {
+    "region": "us-east-1",
+    "mcpTargetRegion": "",
+    "mcpSigningRegion": "",
+    "mcpSigningService": ""
+  },
+  "database": {
+    "mongoUrl": "mongodb://127.0.0.1:27017/canvas_flow",
+    "mongoServerSelectionTimeoutMs": 8000,
+    "mongoConnectTimeoutMs": 8000
+  },
+  "auth": {
+    "login": false,
+    "loginTtlHours": 24,
+    "loginThrottleWindowMs": 600000,
+    "loginMaxAttempts": 8,
+    "apiToken": "generated-by-canvas-flow-init",
+    "jwtSecret": "generated-by-canvas-flow-init",
+    "mediaProxySecret": "generated-by-canvas-flow-init",
+    "mediaProxyTtlSeconds": 86400
+  },
+  "files": {
+    "storage": "local",
+    "localDir": "./tmp/canvas-flow-documents",
+    "s3Bucket": "",
+    "s3Region": "us-east-1",
+    "downloadTtlSeconds": 900
+  },
+  "providers": {
+    "openai": {
+      "provider": "openai",
+      "llmProvider": "",
+      "apiKey": "",
+      "chatModel": "gpt-4o",
+      "embeddingModel": "text-embedding-3-large",
+      "embeddingDimensions": 3072,
+      "ocrModel": "gpt-4o"
+    },
+    "gemini": {
+      "apiKey": "",
+      "googleAiApiKey": "",
+      "chatModel": "gemini-3.5-flash"
+    },
+    "claude": {
+      "apiKey": "",
+      "chatModel": "claude-sonnet-4-6"
+    },
+    "grok": {
+      "apiKey": "",
+      "baseUrl": "https://api.x.ai/v1",
+      "chatModel": "grok-2-latest"
+    },
+    "bedrock": {
+      "apiKey": "",
+      "baseUrl": "",
+      "region": "us-east-1",
+      "chatModel": "anthropic.claude-sonnet-4-6"
+    },
+    "azureOpenAI": {
+      "enabled": false,
+      "apiKey": "",
+      "endpoint": "",
+      "apiBasePath": "",
+      "apiVersion": "2024-02-15-preview",
+      "chatDeploymentName": "",
+      "chatModelName": "",
+      "deployment": "",
+      "modelName": "",
+      "embeddingDeploymentName": "",
+      "modelNameEmb": "",
+      "ocrDeploymentName": "",
+      "embeddingDimensions": 3072
+    },
+    "milvus": {
+      "address": "",
+      "token": "",
+      "username": "",
+      "password": "",
+      "collectionName": "canvas_flow_docs",
+      "vectorProvider": "milvus"
+    },
+    "azureBlob": {
+      "connectionString": "",
+      "containerName": ""
+    },
+    "azureSearch": {
+      "endpoint": "",
+      "apiKey": "",
+      "indexName": "",
+      "apiVersion": "2024-07-01"
+    },
+    "mongoComponent": {
+      "connectionString": "",
+      "databaseName": ""
+    },
+    "figmaOAuth": {
+      "clientId": "",
+      "clientSecret": "",
+      "tokenAuthMethod": "client_secret_post"
+    },
+    "canvasMcpOAuth": {
+      "clientId": "",
+      "clientSecret": "",
+      "tokenAuthMethod": "client_secret_post"
+    },
+    "webWidget": {
+      "primaryColor": "#0f6bff",
+      "accentColor": "#00b37e",
+      "assistantName": "Assistente IA",
+      "subtitle": "Online agora",
+      "welcomeMessage": "Ola! Como posso ajudar?",
+      "placeholder": "Digite sua mensagem",
+      "bubbleLabel": "Precisa de ajuda?",
+      "avatarText": "IA",
+      "openByDefault": false,
+      "position": "right"
+    },
+    "whatsapp": {
+      "provider": "meta",
+      "deliveryMode": "provider",
+      "autoReply": true,
+      "verifyToken": "",
+      "accessToken": "",
+      "businessAccountId": "",
+      "wabaId": "",
+      "phoneNumberId": "",
+      "graphApiVersion": "v20.0",
+      "blipContractId": "",
+      "blipAuthorizationKey": "",
+      "sinchProjectId": "",
+      "sinchAppId": "",
+      "sinchRegion": "us",
+      "sinchAccessToken": "",
+      "sinchChannel": "WHATSAPP",
+      "sinchApiMode": "conversation",
+      "sinchServiceNumber": "",
+      "sinchServiceUsername": "",
+      "sinchServiceToken": ""
+    },
+    "sinch": {
+      "apiUrl": "https://api-messaging.wavy.global/v1/whatsapp/send",
+      "canvasFlowApiUrl": ""
+    }
+  },
+  "sqs": {
+    "enabled": false,
+    "queueUrl": "",
+    "queueArn": "",
+    "region": "us-east-1",
+    "triggerEnabled": true,
+    "batchSize": 10,
+    "batchWindowSeconds": 2,
+    "jobTtlHours": 24,
+    "consumerConcurrency": 10,
+    "conversationLockTtlMs": 900000
+  },
+  "rateLimit": {
+    "enabled": true,
+    "windowMs": 60000,
+    "perMinute": 600,
+    "webwidgetPerMinute": 300,
+    "whatsappPerMinute": 600,
+    "apiPerMinute": 600,
+    "messageDedupeTtlHours": 24
+  },
+  "httpBatch": {
+    "timeoutMs": 120000,
+    "maxRequests": 10,
+    "pollingMaxAttempts": 20,
+    "pollingMaxIntervalSeconds": 60,
+    "pollingHistoryLimit": 8
+  },
+  "agentOps": {
+    "defaultHistoryLimit": 80,
+    "defaultTraceLimit": 600
+  }
+}

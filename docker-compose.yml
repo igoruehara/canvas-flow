@@ -1,0 +1,58 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: canvas-flow-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - canvas_flow_mongo:/data/db
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: canvas-flow-etcd
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+    command: >
+      etcd
+      -advertise-client-urls=http://127.0.0.1:2379
+      -listen-client-urls=http://0.0.0.0:2379
+      --data-dir=/etcd
+    volumes:
+      - canvas_flow_etcd:/etcd
+
+  minio:
+    image: minio/minio:latest
+    container_name: canvas-flow-minio
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: minio server /minio_data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - canvas_flow_minio:/minio_data
+
+  milvus:
+    image: milvusdb/milvus:latest
+    container_name: canvas-flow-milvus
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - etcd
+      - minio
+    volumes:
+      - canvas_flow_milvus:/var/lib/milvus
+
+volumes:
+  canvas_flow_mongo:
+  canvas_flow_etcd:
+  canvas_flow_minio:
+  canvas_flow_milvus:

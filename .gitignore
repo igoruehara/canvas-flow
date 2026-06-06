@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.serverless/
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+!.env.*.example
+config.json
+.canvas-flow/
+.agents.md
+
+# Logs
+*.log
+tmp-*.log
+
+# Runtime/generated artifacts
+tmp/
+**/tmp/
+*.tgz

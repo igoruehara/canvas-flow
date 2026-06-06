@@ -1,0 +1,147 @@
+service: ${env:SERVICE_PREFIX, 'dev'}-ms-canvas-flow
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, env:AWS_REGION, 'us-east-1'}
+  memorySize: 3008
+  timeout: 900
+  stage: ${opt:stage, 'dev'}
+  lambdaHashingVersion: 20201221
+  environment: ${file(ymls/environment.yml)}
+  ecr:
+    images:
+      appimage:
+        path: ./
+        platform: linux/amd64
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:ChangeMessageVisibility
+            - sqs:GetQueueAttributes
+            - sqs:GetQueueUrl
+          Resource:
+            - Fn::GetAtt:
+                - CanvasFlowQueue
+                - Arn
+            - Fn::GetAtt:
+                - CanvasFlowDeadLetterQueue
+                - Arn
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+          Resource:
+            - Fn::Join:
+                - ''
+                - - Fn::GetAtt:
+                      - CanvasFlowDocumentsBucket
+                      - Arn
+                  - '/*'
+
+functions:
+  main:
+    image:
+      name: appimage
+      command:
+        - dist/lambda.handler
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    url: true
+    events:
+      - schedule:
+          rate: rate(1 minute)
+          enabled: true
+          input:
+            source: canvas-flow.cron
+            action: runDueCronFlows
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - CanvasFlowQueue
+              - Arn
+          enabled: ${self:custom.CANVAS_FLOW_SQS_TRIGGER_ENABLED.${opt:stage, self:provider.stage, 'dev'}}
+          batchSize: ${self:custom.CANVAS_FLOW_SQS_BATCH_SIZE.${opt:stage, self:provider.stage, 'dev'}}
+          maximumBatchingWindow: ${self:custom.CANVAS_FLOW_SQS_BATCH_WINDOW_SECONDS.${opt:stage, self:provider.stage, 'dev'}}
+          functionResponseType: ReportBatchItemFailures
+
+package:
+  patterns:
+    - '!**'
+
+resources:
+  Resources:
+    CanvasFlowDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-dlq
+        MessageRetentionPeriod: 1209600
+
+    CanvasFlowQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-messages
+        VisibilityTimeout: 960
+        MessageRetentionPeriod: 1209600
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - CanvasFlowDeadLetterQueue
+              - Arn
+          maxReceiveCount: 5
+
+    CanvasFlowDocumentsBucket:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
+      Properties:
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: AES256
+        VersioningConfiguration:
+          Status: Enabled
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+
+  Outputs:
+    CanvasFlowSqsQueueUrl:
+      Description: URL da fila SQS Standard gerenciada pelo Canvas Flow
+      Value:
+        Ref: CanvasFlowQueue
+    CanvasFlowSqsQueueArn:
+      Description: ARN da fila SQS Standard gerenciada pelo Canvas Flow
+      Value:
+        Fn::GetAtt:
+          - CanvasFlowQueue
+          - Arn
+    CanvasFlowSqsDeadLetterQueueUrl:
+      Description: URL da DLQ SQS do Canvas Flow
+      Value:
+        Ref: CanvasFlowDeadLetterQueue
+    CanvasFlowSqsDeadLetterQueueArn:
+      Description: ARN da DLQ SQS do Canvas Flow
+      Value:
+        Fn::GetAtt:
+          - CanvasFlowDeadLetterQueue
+          - Arn
+    CanvasFlowLambdaFunctionUrl:
+      Description: URL publica da Lambda Function URL do Canvas Flow
+      Value:
+        Fn::GetAtt:
+          - MainLambdaFunctionUrl
+          - FunctionUrl
+    CanvasFlowDocumentsBucketName:
+      Description: Bucket S3 privado para documentos originais e artefatos gerados
+      Value:
+        Ref: CanvasFlowDocumentsBucket
+
+custom: ${file(ymls/custom.yml)}

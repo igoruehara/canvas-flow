@@ -1,0 +1,140 @@
+import { Connection } from 'mongoose';
+export declare const connectProviders: {
+    provide: string;
+    useFactory: (connection: Connection) => import("mongoose").Model<{
+        key: string;
+        organizationId: string;
+        text: string;
+        version: number;
+        agentId: string;
+        flowId: string;
+        source: string;
+        conversationId: string;
+        metadata: any;
+        size: number;
+        status: string;
+        documentId: string;
+        rootDocumentId: string;
+        parentDocumentId: string;
+        filename: string;
+        mimeType: string;
+        storage: string;
+        bucket: string;
+        structure: any;
+    } & import("mongoose").DefaultTimestampProps, {}, {}, {}, import("mongoose").Document<unknown, {}, {
+        key: string;
+        organizationId: string;
+        text: string;
+        version: number;
+        agentId: string;
+        flowId: string;
+        source: string;
+        conversationId: string;
+        metadata: any;
+        size: number;
+        status: string;
+        documentId: string;
+        rootDocumentId: string;
+        parentDocumentId: string;
+        filename: string;
+        mimeType: string;
+        storage: string;
+        bucket: string;
+        structure: any;
+    } & import("mongoose").DefaultTimestampProps, {}, {}> & {
+        key: string;
+        organizationId: string;
+        text: string;
+        version: number;
+        agentId: string;
+        flowId: string;
+        source: string;
+        conversationId: string;
+        metadata: any;
+        size: number;
+        status: string;
+        documentId: string;
+        rootDocumentId: string;
+        parentDocumentId: string;
+        filename: string;
+        mimeType: string;
+        storage: string;
+        bucket: string;
+        structure: any;
+    } & import("mongoose").DefaultTimestampProps & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }, import("mongoose").Schema<any, import("mongoose").Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
+        collection: string;
+        timestamps: true;
+    }, {
+        key: string;
+        organizationId: string;
+        text: string;
+        version: number;
+        agentId: string;
+        flowId: string;
+        source: string;
+        conversationId: string;
+        metadata: any;
+        size: number;
+        status: string;
+        documentId: string;
+        rootDocumentId: string;
+        parentDocumentId: string;
+        filename: string;
+        mimeType: string;
+        storage: string;
+        bucket: string;
+        structure: any;
+    } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
+        key: string;
+        organizationId: string;
+        text: string;
+        version: number;
+        agentId: string;
+        flowId: string;
+        source: string;
+        conversationId: string;
+        metadata: any;
+        size: number;
+        status: string;
+        documentId: string;
+        rootDocumentId: string;
+        parentDocumentId: string;
+        filename: string;
+        mimeType: string;
+        storage: string;
+        bucket: string;
+        structure: any;
+    } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
+        collection: string;
+        timestamps: true;
+    }>> & import("mongoose").FlatRecord<{
+        key: string;
+        organizationId: string;
+        text: string;
+        version: number;
+        agentId: string;
+        flowId: string;
+        source: string;
+        conversationId: string;
+        metadata: any;
+        size: number;
+        status: string;
+        documentId: string;
+        rootDocumentId: string;
+        parentDocumentId: string;
+        filename: string;
+        mimeType: string;
+        storage: string;
+        bucket: string;
+        structure: any;
+    } & import("mongoose").DefaultTimestampProps> & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }>>;
+    inject: string[];
+}[];

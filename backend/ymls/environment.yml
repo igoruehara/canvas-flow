@@ -1,0 +1,62 @@
+LOG_IS_LAMBDA: 'true'
+CANVAS_FLOW_CRON_AUTORUN: 'false'
+APPLICATION_REGION: ${self:custom.regions.${self:provider.stage}}
+NODE_ENV: ${self:custom.NodeEnv.${opt:stage, self:provider.stage, 'dev'}}
+TZ: ${self:custom.tz.${opt:stage, self:provider.stage, 'dev'}}
+PORT: ${self:custom.Port.${opt:stage, self:provider.stage, 'dev'}}
+CORS_ORIGINS: ${self:custom.CORS_ORIGINS.${opt:stage, self:provider.stage, 'dev'}}
+REQUEST_BODY_LIMIT: ${self:custom.REQUEST_BODY_LIMIT.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_API_TOKEN: ${self:custom.CANVAS_FLOW_API_TOKEN.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_JWT_SECRET: ${self:custom.CANVAS_FLOW_JWT_SECRET.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_LOGIN: ${self:custom.CANVAS_FLOW_LOGIN.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_LOGIN_TTL_HOURS: ${self:custom.CANVAS_FLOW_LOGIN_TTL_HOURS.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_PUBLIC_URL: ${self:custom.CANVAS_FLOW_PUBLIC_URL.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_API_PUBLIC_URL: ${self:custom.CANVAS_FLOW_API_PUBLIC_URL.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_FILES_STORAGE: 's3'
+CANVAS_FLOW_FILES_S3_BUCKET:
+  Ref: CanvasFlowDocumentsBucket
+CANVAS_FLOW_FILES_S3_REGION: ${self:provider.region}
+CANVAS_FLOW_FILES_DOWNLOAD_TTL_SECONDS: '900'
+FIGMA_MCP_OAUTH_CLIENT_ID: ${self:custom.FIGMA_MCP_OAUTH_CLIENT_ID.${opt:stage, self:provider.stage, 'dev'}}
+FIGMA_MCP_OAUTH_CLIENT_SECRET: ${self:custom.FIGMA_MCP_OAUTH_CLIENT_SECRET.${opt:stage, self:provider.stage, 'dev'}}
+FIGMA_MCP_OAUTH_TOKEN_AUTH_METHOD: ${self:custom.FIGMA_MCP_OAUTH_TOKEN_AUTH_METHOD.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_MEDIA_PROXY_SECRET: ${self:custom.CANVAS_FLOW_MEDIA_PROXY_SECRET.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_MEDIA_PROXY_TTL_SECONDS: ${self:custom.CANVAS_FLOW_MEDIA_PROXY_TTL_SECONDS.${opt:stage, self:provider.stage, 'dev'}}
+
+MONGO_DB_CONNECTION_STRING: ${self:custom.MONGO_DB_CONNECTION_STRING.${opt:stage, self:provider.stage, 'dev'}}
+MONGODB_URI: ${self:custom.MONGO_DB_CONNECTION_STRING.${opt:stage, self:provider.stage, 'dev'}}
+
+MILVUS_ADDRESS: ${self:custom.MILVUS_ADDRESS.${opt:stage, self:provider.stage, 'dev'}}
+MILVUS_TOKEN: ${self:custom.MILVUS_TOKEN.${opt:stage, self:provider.stage, 'dev'}}
+MILVUS_USERNAME: ${self:custom.MILVUS_USERNAME.${opt:stage, self:provider.stage, 'dev'}}
+MILVUS_PASSWORD: ${self:custom.MILVUS_PASSWORD.${opt:stage, self:provider.stage, 'dev'}}
+COLLECTION_NAME: ${self:custom.COLLECTION_NAME.${opt:stage, self:provider.stage, 'dev'}}
+
+OPENAI_API_KEY: ${self:custom.OPENAI_API_KEY.${opt:stage, self:provider.stage, 'dev'}}
+OPENAI_EMBEDDING_MODEL: ${self:custom.OPENAI_EMBEDDING_MODEL.${opt:stage, self:provider.stage, 'dev'}}
+OPENAI_CHAT_MODEL: ${self:custom.OPENAI_CHAT_MODEL.${opt:stage, self:provider.stage, 'dev'}}
+
+HTTP_BATCH_TIMEOUT_MS: ${self:custom.HTTP_BATCH_TIMEOUT_MS.${opt:stage, self:provider.stage, 'dev'}}
+HTTP_BATCH_MAX_REQUESTS: ${self:custom.HTTP_BATCH_MAX_REQUESTS.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_MAX_STEP_VISITS: ${self:custom.CANVAS_FLOW_MAX_STEP_VISITS.${opt:stage, self:provider.stage, 'dev'}}
+ENABLE_SWAGGER: ${self:custom.ENABLE_SWAGGER.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_STRICT_PRODUCTION: ${self:custom.CANVAS_FLOW_STRICT_PRODUCTION.${opt:stage, self:provider.stage, 'dev'}}
+
+CANVAS_FLOW_SQS: ${self:custom.CANVAS_FLOW_SQS.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_SQS_QUEUE_URL:
+  Ref: CanvasFlowQueue
+CANVAS_FLOW_SQS_QUEUE_ARN:
+  Fn::GetAtt:
+    - CanvasFlowQueue
+    - Arn
+CANVAS_FLOW_SQS_REGION: ${self:custom.CANVAS_FLOW_SQS_REGION.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_SQS_JOB_TTL_HOURS: ${self:custom.CANVAS_FLOW_SQS_JOB_TTL_HOURS.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_SQS_CONSUMER_CONCURRENCY: ${self:custom.CANVAS_FLOW_SQS_CONSUMER_CONCURRENCY.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_SQS_CONVERSATION_LOCK_TTL_MS: ${self:custom.CANVAS_FLOW_SQS_CONVERSATION_LOCK_TTL_MS.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_RATE_LIMIT_ENABLED: ${self:custom.CANVAS_FLOW_RATE_LIMIT_ENABLED.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_RATE_LIMIT_WINDOW_MS: ${self:custom.CANVAS_FLOW_RATE_LIMIT_WINDOW_MS.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_RATE_LIMIT_PER_MINUTE: ${self:custom.CANVAS_FLOW_RATE_LIMIT_PER_MINUTE.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_RATE_LIMIT_WEBWIDGET_PER_MINUTE: ${self:custom.CANVAS_FLOW_RATE_LIMIT_WEBWIDGET_PER_MINUTE.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_RATE_LIMIT_WHATSAPP_PER_MINUTE: ${self:custom.CANVAS_FLOW_RATE_LIMIT_WHATSAPP_PER_MINUTE.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_RATE_LIMIT_API_PER_MINUTE: ${self:custom.CANVAS_FLOW_RATE_LIMIT_API_PER_MINUTE.${opt:stage, self:provider.stage, 'dev'}}
+CANVAS_FLOW_MESSAGE_DEDUPE_TTL_HOURS: ${self:custom.CANVAS_FLOW_MESSAGE_DEDUPE_TTL_HOURS.${opt:stage, self:provider.stage, 'dev'}}

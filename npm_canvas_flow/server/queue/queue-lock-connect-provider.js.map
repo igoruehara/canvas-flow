@@ -1,0 +1,1 @@
+{"version":3,"file":"queue-lock-connect-provider.js","sourceRoot":"","sources":["../../src/queue/queue-lock-connect-provider.ts"],"names":[],"mappings":";;;AACA,4DAAuE;AACvE,6EAA2E;AAC3E,2DAAmD;AAEtC,QAAA,oBAAoB,GAAG;IAClC;QACE,OAAO,EAAE,uCAAU;QACnB,UAAU,EAAE,CAAC,UAAsB,EAAE,EAAE,CAAC,UAAU,CAAC,KAAK,CAAC,4CAAe,EAAE,gCAAY,CAAC;QACvF,MAAM,EAAE,CAAC,iDAA8B,CAAC;KACzC;CACF,CAAC"}

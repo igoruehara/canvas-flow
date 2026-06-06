@@ -1,0 +1,125 @@
+name: Deploy Canvas Flow AWS Lambda
+
+on:
+  push:
+    branches:
+      - dev
+      - hml
+      - prd
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install Serverless Framework Globally
+        run: npm install -g serverless@3.38.0
+
+      - name: Install Project Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Test Backend
+        run: npm test -- --runInBand
+
+      - name: Audit Backend Production Dependencies
+        run: npm run audit:prod
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Set Stage and Service Prefix
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          echo "Branch name is $BRANCH_NAME"
+          if [ "$BRANCH_NAME" = "prd" ]; then
+            echo "STAGE=prd" >> $GITHUB_ENV
+            echo "SERVICE_PREFIX=prd" >> $GITHUB_ENV
+          elif [ "$BRANCH_NAME" = "hml" ]; then
+            echo "STAGE=hml" >> $GITHUB_ENV
+            echo "SERVICE_PREFIX=hml" >> $GITHUB_ENV
+          elif [ "$BRANCH_NAME" = "dev" ]; then
+            echo "STAGE=dev" >> $GITHUB_ENV
+            echo "SERVICE_PREFIX=dev" >> $GITHUB_ENV
+          else
+            echo "Branch $BRANCH_NAME is not mapped to a deploy stage."
+            exit 1
+          fi
+
+      - name: Serverless Deploy
+        env:
+          STAGE: ${{ env.STAGE }}
+          SERVICE_PREFIX: ${{ env.SERVICE_PREFIX }}
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          DOCKER_BUILDKIT: 0
+          CANVAS_FLOW_API_TOKEN: ${{ secrets.CANVAS_FLOW_API_TOKEN }}
+          CANVAS_FLOW_API_TOKEN_DEV: ${{ secrets.CANVAS_FLOW_API_TOKEN_DEV }}
+          CANVAS_FLOW_API_TOKEN_HML: ${{ secrets.CANVAS_FLOW_API_TOKEN_HML }}
+          CANVAS_FLOW_API_TOKEN_PRD: ${{ secrets.CANVAS_FLOW_API_TOKEN_PRD }}
+          CANVAS_FLOW_STRICT_PRODUCTION: ${{ secrets.CANVAS_FLOW_STRICT_PRODUCTION }}
+          CANVAS_FLOW_STRICT_PRODUCTION_DEV: ${{ secrets.CANVAS_FLOW_STRICT_PRODUCTION_DEV }}
+          CANVAS_FLOW_STRICT_PRODUCTION_HML: ${{ secrets.CANVAS_FLOW_STRICT_PRODUCTION_HML }}
+          CANVAS_FLOW_STRICT_PRODUCTION_PRD: ${{ secrets.CANVAS_FLOW_STRICT_PRODUCTION_PRD }}
+          CANVAS_FLOW_MONGO_DB_CONNECTION_STRING: ${{ secrets.CANVAS_FLOW_MONGO_DB_CONNECTION_STRING }}
+          CANVAS_FLOW_MONGO_DB_CONNECTION_STRING_DEV: ${{ secrets.CANVAS_FLOW_MONGO_DB_CONNECTION_STRING_DEV }}
+          CANVAS_FLOW_MONGO_DB_CONNECTION_STRING_HML: ${{ secrets.CANVAS_FLOW_MONGO_DB_CONNECTION_STRING_HML }}
+          CANVAS_FLOW_MONGO_DB_CONNECTION_STRING_PRD: ${{ secrets.CANVAS_FLOW_MONGO_DB_CONNECTION_STRING_PRD }}
+          CANVAS_FLOW_MILVUS_ADDRESS: ${{ secrets.CANVAS_FLOW_MILVUS_ADDRESS }}
+          CANVAS_FLOW_MILVUS_ADDRESS_DEV: ${{ secrets.CANVAS_FLOW_MILVUS_ADDRESS_DEV }}
+          CANVAS_FLOW_MILVUS_ADDRESS_HML: ${{ secrets.CANVAS_FLOW_MILVUS_ADDRESS_HML }}
+          CANVAS_FLOW_MILVUS_ADDRESS_PRD: ${{ secrets.CANVAS_FLOW_MILVUS_ADDRESS_PRD }}
+          CANVAS_FLOW_MILVUS_TOKEN: ${{ secrets.CANVAS_FLOW_MILVUS_TOKEN }}
+          CANVAS_FLOW_MILVUS_TOKEN_DEV: ${{ secrets.CANVAS_FLOW_MILVUS_TOKEN_DEV }}
+          CANVAS_FLOW_MILVUS_TOKEN_HML: ${{ secrets.CANVAS_FLOW_MILVUS_TOKEN_HML }}
+          CANVAS_FLOW_MILVUS_TOKEN_PRD: ${{ secrets.CANVAS_FLOW_MILVUS_TOKEN_PRD }}
+          CANVAS_FLOW_COLLECTION_NAME: ${{ secrets.CANVAS_FLOW_COLLECTION_NAME }}
+          CANVAS_FLOW_OPENAI_API_KEY: ${{ secrets.CANVAS_FLOW_OPENAI_API_KEY }}
+          CANVAS_FLOW_OPENAI_API_KEY_DEV: ${{ secrets.CANVAS_FLOW_OPENAI_API_KEY_DEV }}
+          CANVAS_FLOW_OPENAI_API_KEY_HML: ${{ secrets.CANVAS_FLOW_OPENAI_API_KEY_HML }}
+          CANVAS_FLOW_OPENAI_API_KEY_PRD: ${{ secrets.CANVAS_FLOW_OPENAI_API_KEY_PRD }}
+        run: npm run deploy -- --stage $STAGE --config serverless.yaml
+
+      - name: Cleanup old ECR images (keep last 2)
+        if: always()
+        run: |
+          REPOS=$(aws ecr describe-repositories --query "repositories[*].repositoryName" --output text 2>/dev/null || true)
+          for REPO in $REPOS; do
+            COUNT=$(aws ecr describe-images --repository-name "$REPO" --query 'imageDetails | length(@)' --output text 2>/dev/null || echo "0")
+            if [ "$COUNT" -gt 2 ]; then
+              echo "Cleaning $REPO ($COUNT images, keeping 2)..."
+              OLD_DIGESTS=$(aws ecr describe-images \
+                --repository-name "$REPO" \
+                --query 'sort_by(imageDetails, &imagePushedAt) | [0:-2].imageDigest' \
+                --output text 2>/dev/null || true)
+              if [ -n "$OLD_DIGESTS" ]; then
+                IMAGE_IDS=""
+                for DIGEST in $OLD_DIGESTS; do
+                  IMAGE_IDS="$IMAGE_IDS imageDigest=$DIGEST"
+                done
+                aws ecr batch-delete-image \
+                  --repository-name "$REPO" \
+                  --image-ids $IMAGE_IDS 2>/dev/null || true
+              fi
+            fi
+          done

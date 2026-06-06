@@ -1,0 +1,1 @@
+{"version":3,"file":"flow-tag-connect-provider.js","sourceRoot":"","sources":["../../src/flow-tag/flow-tag-connect-provider.ts"],"names":[],"mappings":";;;AACA,4DAAuE;AACvE,yEAAyE;AACzE,uDAAiD;AAEpC,QAAA,gBAAgB,GAAG;IAC9B;QACE,OAAO,EAAE,qCAAU;QACnB,UAAU,EAAE,CAAC,UAAsB,EAAE,EAAE,CAAC,UAAU,CAAC,KAAK,CAAC,0CAAe,EAAE,8BAAY,CAAC;QACvF,MAAM,EAAE,CAAC,iDAA8B,CAAC;KACzC;CACF,CAAC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"queue-job-connect-provider.js","sourceRoot":"","sources":["../../src/queue/queue-job-connect-provider.ts"],"names":[],"mappings":";;;AACA,4DAAuE;AACvE,2EAA0E;AAC1E,yDAAkD;AAErC,QAAA,gBAAgB,GAAG;IAC9B;QACE,OAAO,EAAE,sCAAU;QACnB,UAAU,EAAE,CAAC,UAAsB,EAAE,EAAE,CAAC,UAAU,CAAC,KAAK,CAAC,2CAAe,EAAE,+BAAY,CAAC;QACvF,MAAM,EAAE,CAAC,iDAA8B,CAAC;KACzC;CACF,CAAC"}
