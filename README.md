@@ -183,7 +183,7 @@ Para gerar um tarball local:
 ```bash
 cd npm_canvas_flow
 npm run pack:local
-npm install -g igoruehara-canvas-flow-0.1.8.tgz
+npm install -g igoruehara-canvas-flow-0.1.9.tgz
 canvas-flow
 ```
 
