@@ -1,10 +1,11 @@
 # Canvas Flow
 
-Canvas Flow e uma aplicacao web local para criar, testar e executar fluxos de IA multiagente em formato visual. O pacote npm sobe frontend e backend juntos em um unico comando.
+Canvas Flow é uma aplicação web local para criar, testar e executar agentes de IA multiagente em formato visual, com canais prontos para WhatsApp e Web Widget. O pacote npm sobe frontend e backend juntos em um único comando.
 
 Use quando quiser:
 
-- criar automacoes com agentes de IA;
+- criar agentes de IA para atendimento e automação;
+- publicar agentes nos canais WhatsApp e Web Widget;
 - conectar prompts, ferramentas, webhooks e documentos;
 - testar fluxos localmente antes de publicar;
 - usar RAG com documentos;
@@ -42,7 +43,7 @@ http://localhost:3333
 - execucao local de frontend e API no mesmo processo Node;
 - configuracao de provedores de IA pela UI ou pelo `config.json`;
 - RAG com Milvus/Zilliz ou Azure AI Search;
-- entrada por API, webhook, web widget e canais configurados no app;
+- canais de entrada para WhatsApp, Web Widget, API e webhook;
 - chaves de API para consumir fluxos publicados;
 - validacao do ambiente com `doctor`.
 

@@ -1,12 +1,13 @@
 # Canvas Flow
 
-Workspace standalone para a tela Canvas Flow.
+Canvas Flow é um workspace para criar, testar e executar agentes de IA em fluxos visuais, com canais prontos para atendimento e automação via WhatsApp e Web Widget.
 
 Pastas:
 - `frontend`: editor visual React Flow desacoplado do frontend atual.
 - `backend`: API NestJS no estilo dos projetos `rag_v2` e `orquestrador`.
 
 Escopo implementado:
+- Criação de agentes de IA para WhatsApp, Web Widget, API e webhooks.
 - Canvas com nós: mensagem, input, API/httpBatch, condição, fim e encapsulador.
 - Componentes reduzidos: `RAG IA Gen` e `Debug`.
 - Backend com CRUD de fluxos.
@@ -183,7 +184,7 @@ Para gerar um tarball local:
 ```bash
 cd npm_canvas_flow
 npm run pack:local
-npm install -g igoruehara-canvas-flow-0.1.9.tgz
+npm install -g igoruehara-canvas-flow-0.1.10.tgz
 canvas-flow
 ```
 
