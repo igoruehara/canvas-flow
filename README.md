@@ -15,6 +15,24 @@ Escopo implementado:
 - Tool `httpBatch` para a IA chamar APIs durante o RAG.
 - Teste real do fluxo via `POST /api/canvas-flow/test`.
 
+## Interface
+
+### Editor Visual
+
+![Editor visual de fluxos do Canvas Flow](npm_canvas_flow/docs/screenshots/flow-editor.png)
+
+### Teste Do Fluxo
+
+![Editor visual com painel de teste do fluxo](npm_canvas_flow/docs/screenshots/flow-editor-test-panel.png)
+
+### Biblioteca De Componentes
+
+![Biblioteca de componentes do Canvas Flow](npm_canvas_flow/docs/screenshots/component-library.png)
+
+### Provedores
+
+![Tela de provedores do Canvas Flow](npm_canvas_flow/docs/screenshots/providers.png)
+
 ## Rodar local
 
 Suba infraestrutura local se ainda nao tiver Mongo/Milvus:
