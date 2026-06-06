@@ -7,11 +7,11 @@ Pastas:
 - `backend`: API NestJS no estilo dos projetos `rag_v2` e `orquestrador`.
 
 Escopo implementado:
-- Canvas com nodes: mensagem, input, API/httpBatch, condicao, fim e encapsulador.
+- Canvas com nós: mensagem, input, API/httpBatch, condição, fim e encapsulador.
 - Componentes reduzidos: `RAG IA Gen` e `Debug`.
 - Backend com CRUD de fluxos.
 - RAG com OpenAI embeddings + Milvus/Zilliz.
-- Memoria por turnos em Mongo por `agentId + conversationId`.
+- Memória por turnos em Mongo por `agentId + conversationId`.
 - Tool `httpBatch` para a IA chamar APIs durante o RAG.
 - Teste real do fluxo via `POST /api/canvas-flow/test`.
 
@@ -21,11 +21,11 @@ Escopo implementado:
 
 ![Editor visual de fluxos do Canvas Flow](npm_canvas_flow/docs/screenshots/flow-editor.png)
 
-### Teste Do Fluxo
+### Teste do Fluxo
 
 ![Editor visual com painel de teste do fluxo](npm_canvas_flow/docs/screenshots/flow-editor-test-panel.png)
 
-### Biblioteca De Componentes
+### Biblioteca de Componentes
 
 ![Biblioteca de componentes do Canvas Flow](npm_canvas_flow/docs/screenshots/component-library.png)
 
@@ -35,7 +35,7 @@ Escopo implementado:
 
 ## Rodar local
 
-Suba infraestrutura local se ainda nao tiver Mongo/Milvus:
+Suba a infraestrutura local se ainda não tiver Mongo/Milvus:
 
 ```bash
 docker compose up -d mongo etcd minio milvus
@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-URLs padrao:
+URLs padrão:
 - Frontend: `http://localhost:5177`
 - Backend: `http://localhost:3333`
 - Swagger: `http://localhost:3333/docs`
@@ -84,10 +84,10 @@ Secrets esperados no GitHub:
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `SERVERLESS_ACCESS_KEY`
-- `CANVAS_FLOW_MONGO_DB_CONNECTION_STRING` ou os especificos `*_DEV`, `*_HML`, `*_PRD`
-- `CANVAS_FLOW_MILVUS_ADDRESS` ou os especificos por stage
+- `CANVAS_FLOW_MONGO_DB_CONNECTION_STRING` ou os específicos `*_DEV`, `*_HML`, `*_PRD`
+- `CANVAS_FLOW_MILVUS_ADDRESS` ou os específicos por stage
 - `CANVAS_FLOW_MILVUS_TOKEN` se usar Zilliz token
-- `CANVAS_FLOW_OPENAI_API_KEY` ou os especificos por stage
+- `CANVAS_FLOW_OPENAI_API_KEY` ou os específicos por stage
 - opcional: `CANVAS_FLOW_COLLECTION_NAME`
 
 Deploy manual:
@@ -98,14 +98,14 @@ npm run build
 npm run deploy -- --stage dev --config serverless.yaml
 ```
 
-Teste local da resolucao do Serverless:
+Teste local da resolução do Serverless:
 
 ```bash
 cd backend
 npx serverless@3.38.0 print --stage dev --config serverless.yaml
 ```
 
-## Observacao
+## Observação
 
 O backend compila sem depender de Mongo/Milvus online, mas para executar precisa de Mongo ativo.
 Para RAG real, configure `OPENAI_API_KEY`, `MILVUS_ADDRESS` e `COLLECTION_NAME`.
@@ -115,19 +115,19 @@ Para RAG real, configure `OPENAI_API_KEY`, `MILVUS_ADDRESS` e `COLLECTION_NAME`.
 A pasta `npm_canvas_flow` cria uma embalagem estilo Node-RED: um pacote com CLI
 global que sobe backend e frontend juntos.
 
-Experiencia de usuario final quando publicado no npm:
+Experiência de usuário final quando publicado no npm:
 
 ```bash
 npx @igoruehara/canvas-flow@latest --with-docker --open
 ```
 
-Se o usuario ja tiver MongoDB local rodando:
+Se o usuário já tiver MongoDB local rodando:
 
 ```bash
 npx @igoruehara/canvas-flow@latest --open
 ```
 
-Desenvolvimento/publicacao local do pacote:
+Desenvolvimento/publicação local do pacote:
 
 ```bash
 cd npm_canvas_flow
@@ -140,7 +140,7 @@ O primeiro start cria `~/.canvas-flow/config.json`. Edite esse arquivo para
 trocar Mongo, Milvus, OpenAI, Azure, SQS e demais configs privadas sem mexer nos
 `.env` atuais de `frontend` e `backend`.
 
-Comandos uteis para configurar depois da instalacao:
+Comandos úteis para configurar depois da instalação:
 
 ```bash
 # Sobe Mongo local via Docker
@@ -152,29 +152,29 @@ canvas-flow infra up --full
 # Sobe a infra Docker antes de iniciar e abre o navegador
 canvas-flow --with-docker --open
 
-# Mostra onde esta o config.json ativo
+# Mostra onde está o config.json ativo
 canvas-flow config
 
-# Abre o config.json no editor padrao
+# Abre o config.json no editor padrão
 canvas-flow config --edit
 
 # Mostra o JSON no terminal
 canvas-flow config --show
 
-# Usa um config.json especifico
+# Usa um config.json específico
 canvas-flow --config C:\canvas-flow\config.json
 
-# Valida bundle, config, Mongo e hardening basico antes de publicar
+# Valida bundle, config, Mongo e hardening básico antes de publicar
 canvas-flow doctor
 
 # Para os containers, mantendo volumes
 canvas-flow infra down
 ```
 
-Observacao: `config.json` contem valores privados, como tokens e secrets
-gerados. Use `--show` com cuidado e nao cole esse conteudo em logs publicos.
+Observação: `config.json` contém valores privados, como tokens e secrets
+gerados. Use `--show` com cuidado e não cole esse conteúdo em logs públicos.
 
-O pacote npm nao deve ser refeito do zero quando frontend/backend evoluem. Ele e
+O pacote npm não deve ser refeito do zero quando frontend/backend evoluem. Ele é
 uma embalagem gerada: rode `npm run bundle` para copiar o `frontend/dist` e o
 `backend/dist` atuais para dentro de `npm_canvas_flow`.
 
@@ -187,12 +187,12 @@ npm install -g igoruehara-canvas-flow-0.1.8.tgz
 canvas-flow
 ```
 
-## Producao controlada
+## Produção Controlada
 
 Antes de colocar um cliente real, rode os gates de build, testes, audit e
 doctor descritos em `docs/PRODUCTION_READINESS.md`.
 
-Arquivos de referencia:
+Arquivos de referência:
 - `backend/.env.production.example`
 - `npm_canvas_flow/templates/config.production.example.json`
 - `.github/workflows/aws.yml` roda testes e audit antes do deploy backend.
