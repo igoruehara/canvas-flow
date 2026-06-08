@@ -1,6 +1,6 @@
 {
   "name": "@igoruehara/canvas-flow",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "description": "Standalone npm launcher for Canvas Flow multi-agent GenAI workflows.",
   "homepage": "https://github.com/igoruehara/canvas-flow#readme",
   "repository": {

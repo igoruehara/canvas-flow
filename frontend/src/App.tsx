@@ -68,7 +68,7 @@ import { AgentStudioModal } from './components/AgentStudioModal';
 import { ApiKeysModal } from './components/ApiKeysModal';
 import { Inspector } from './components/Inspector';
 import { ProviderConfigModal } from './components/ProviderConfigModal';
-import { CANVAS_FLOW_API_TOKEN_CONFIGURED, CANVAS_FLOW_API_URL, canvasApi, type LangGraphRuntimeSummary } from './lib/api';
+import { CANVAS_FLOW_API_URL, canvasApi, hasCanvasFlowAuthToken, type LangGraphRuntimeSummary } from './lib/api';
 import { createDefaultFlow, createId, createStep, createWebWidgetConfig, createWhatsappConfig } from './lib/defaultFlow';
 import { getFlowTemplates, type FlowTemplateSummary } from './lib/flowTemplates';
 import { getDefaultLlmModelForProvider, getLlmModelValuesForProvider, LLM_PROVIDER_OPTIONS } from './lib/llmModels';
@@ -3127,7 +3127,7 @@ export default function App() {
         webWidget,
         whatsapp,
         whatsappWebhookUrl,
-        apiTokenConfigured: CANVAS_FLOW_API_TOKEN_CONFIGURED,
+        apiTokenConfigured: hasCanvasFlowAuthToken(),
       }),
     [apiExampleAgentId, channel, config.responseName, flowName, savedFlowId, webWidget, whatsapp, whatsappWebhookUrl],
   );

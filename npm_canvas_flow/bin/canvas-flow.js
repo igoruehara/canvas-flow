@@ -465,6 +465,19 @@ function joinCorsOrigins(config, publicUrl, port) {
   ].join(',');
 }
 
+function isLoopbackUrl(value) {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase();
+    return hostname === 'localhost'
+      || hostname === '::1'
+      || hostname === '[::1]'
+      || hostname === '0.0.0.0'
+      || hostname.startsWith('127.');
+  } catch {
+    return false;
+  }
+}
+
 function applyEnvironment(config, paths, flags) {
   const port = Number(flags.port || config.server.port || 3333);
   const publicUrl = String(flags['public-url'] || config.server.publicUrl || `http://localhost:${port}`).replace(/\/$/, '');
@@ -515,11 +528,18 @@ function applyEnvironment(config, paths, flags) {
   setEnv('MONGO_SERVER_SELECTION_TIMEOUT_MS', config.database.mongoServerSelectionTimeoutMs);
   setEnv('MONGO_CONNECT_TIMEOUT_MS', config.database.mongoConnectTimeoutMs);
 
-  setBoolEnv('CANVAS_FLOW_LOGIN', asBool(config.auth.login));
+  const loginRequired = asBool(config.auth.login);
+  const exposeApiTokenToFrontend = config.auth.exposeApiTokenToFrontend === true
+    || (!loginRequired && isLoopbackUrl(publicUrl));
+  setBoolEnv('CANVAS_FLOW_LOGIN', loginRequired);
   setEnv('CANVAS_FLOW_LOGIN_TTL_HOURS', config.auth.loginTtlHours);
   setEnv('CANVAS_FLOW_LOGIN_THROTTLE_WINDOW_MS', config.auth.loginThrottleWindowMs || 600000);
   setEnv('CANVAS_FLOW_LOGIN_MAX_ATTEMPTS', config.auth.loginMaxAttempts || 8);
   setEnv('CANVAS_FLOW_API_TOKEN', config.auth.apiToken);
+  delete process.env.CANVAS_FLOW_FRONTEND_API_TOKEN;
+  if (!loginRequired && exposeApiTokenToFrontend) {
+    setEnv('CANVAS_FLOW_FRONTEND_API_TOKEN', config.auth.apiToken);
+  }
   setEnv('CANVAS_FLOW_JWT_SECRET', config.auth.jwtSecret);
   setEnv('CANVAS_FLOW_MEDIA_PROXY_SECRET', config.auth.mediaProxySecret);
   setEnv('CANVAS_FLOW_MEDIA_PROXY_TTL_SECONDS', config.auth.mediaProxyTtlSeconds);
@@ -815,6 +835,123 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function createStartupProgress() {
+  const frames = ['-', '\\', '|', '/'];
+  const useTty = Boolean(process.stdout.isTTY && !process.env.CI);
+  let frameIndex = 0;
+  let lastLength = 0;
+  let interval;
+  let percent = 0;
+  let message = 'starting';
+
+  const line = () => `${frames[frameIndex]} Canvas Flow startup ${String(percent).padStart(3, ' ')}% - ${message}`;
+  const clearLine = () => {
+    if (!useTty || !lastLength) return;
+    process.stdout.write(`\r${' '.repeat(lastLength)}\r`);
+    lastLength = 0;
+  };
+  const render = () => {
+    if (!useTty) return;
+    const text = line();
+    const padded = text.padEnd(lastLength, ' ');
+    lastLength = Math.max(lastLength, text.length);
+    process.stdout.write(`\r${padded}`);
+  };
+  const ensureInterval = () => {
+    if (!useTty || interval) return;
+    interval = setInterval(() => {
+      frameIndex = (frameIndex + 1) % frames.length;
+      render();
+    }, 140);
+    if (typeof interval.unref === 'function') interval.unref();
+  };
+  const stopInterval = () => {
+    if (!interval) return;
+    clearInterval(interval);
+    interval = undefined;
+  };
+
+  return {
+    update(nextPercent, nextMessage) {
+      percent = Math.max(percent, Math.min(99, Number(nextPercent) || percent));
+      message = nextMessage || message;
+      ensureInterval();
+      if (useTty) render();
+      else console.log(`Canvas Flow startup ${percent}% - ${message}`);
+    },
+    log(text) {
+      clearLine();
+      console.log(text);
+      render();
+    },
+    done(text) {
+      percent = 100;
+      message = 'ready';
+      stopInterval();
+      clearLine();
+      console.log(text || 'Canvas Flow ready (100%)');
+    },
+    fail(text) {
+      stopInterval();
+      clearLine();
+      if (text) console.log(text);
+    },
+  };
+}
+
+async function checkHttpOk(url, timeoutMs = 1200) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function startStartupStatus(publicUrl, options = {}) {
+  const healthUrl = `${String(publicUrl || '').replace(/\/$/, '')}/health`;
+  const startedAt = Date.now();
+  const progress = options.progress || createStartupProgress();
+  let stopped = false;
+  let nextHealthLogAt = 0;
+
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+  };
+
+  void (async () => {
+    const deadline = Date.now() + 90000;
+    progress.update(90, `waiting for backend health at ${healthUrl}`);
+    while (!stopped && Date.now() < deadline) {
+      if (await checkHttpOk(healthUrl)) {
+        stop();
+        progress.done(`Canvas Flow ready (100%): ${publicUrl}`);
+        if (options.openBrowser) openBrowser(publicUrl);
+        return;
+      }
+      const elapsedSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+      if (elapsedSeconds >= nextHealthLogAt) {
+        const nextPercent = Math.min(98, 90 + Math.floor(elapsedSeconds / 15));
+        progress.update(nextPercent, `waiting for backend health (${elapsedSeconds}s elapsed)`);
+        nextHealthLogAt = elapsedSeconds + 3;
+      }
+      await sleep(500);
+    }
+
+    if (!stopped) {
+      stop();
+      progress.fail('Canvas Flow startup: health check is still pending. Keep this terminal open and watch the backend logs above.');
+    }
+  })();
+
+  return { stop };
+}
+
 function mongoConnectionOptions(config) {
   return {
     serverSelectionTimeoutMS: Number(config.database?.mongoServerSelectionTimeoutMs || 8000),
@@ -1088,8 +1225,11 @@ async function doctor(flags) {
   reporter.finish();
 }
 
-async function waitForMongo(config, flags, paths) {
-  if (flags['skip-mongo-check'] === true) return;
+async function waitForMongo(config, flags, paths, progress) {
+  if (flags['skip-mongo-check'] === true) {
+    if (progress) progress.update(45, 'MongoDB preflight skipped');
+    return;
+  }
   if (!config.database.mongoUrl) {
     throw new Error(`database.mongoUrl is required. Edit the config with: canvas-flow config --edit`);
   }
@@ -1101,15 +1241,18 @@ async function waitForMongo(config, flags, paths) {
   let lastMessage = '';
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    if (progress) progress.update(30, `checking MongoDB (${attempt}/${attempts})`);
     const result = await checkMongoConnection(config.database.mongoUrl, options);
     if (result.ok) {
-      console.log('MongoDB preflight: connected');
+      if (progress) progress.update(55, 'MongoDB connected');
+      else console.log('MongoDB preflight: connected');
       return;
     }
 
     lastMessage = result.message;
     if (attempt < attempts) {
-      console.log(`MongoDB preflight waiting (${attempt}/${attempts}): ${result.message}`);
+      if (progress) progress.update(35, `waiting for MongoDB (${attempt}/${attempts})`);
+      else console.log(`MongoDB preflight waiting (${attempt}/${attempts}): ${result.message}`);
       await sleep(1500);
     }
   }
@@ -1123,36 +1266,46 @@ async function waitForMongo(config, flags, paths) {
 }
 
 async function start(flags) {
-  assertBundleExists();
-  addSourceDependencyFallback();
-  if (flags['with-docker'] === true || flags.infra === true) {
-    infra('up', flags);
+  const progress = createStartupProgress();
+  let startupStatus;
+  try {
+    progress.update(5, 'checking package bundle');
+    assertBundleExists();
+    progress.update(10, 'loading runtime dependencies');
+    addSourceDependencyFallback();
+    if (flags['with-docker'] === true || flags.infra === true) {
+      progress.log('Canvas Flow startup: starting Docker infrastructure...');
+      infra('up', flags);
+    }
+    progress.update(15, 'loading config');
+    const paths = resolvePaths(flags);
+    ensureDir(paths.homeDir);
+    const configExisted = fs.existsSync(paths.configPath);
+    const config = loadConfig(paths.configPath);
+    progress.update(25, 'applying environment');
+    const runtime = applyEnvironment(config, paths, flags);
+    await waitForMongo(config, flags, paths, progress);
+
+    process.chdir(paths.homeDir);
+
+    progress.log(`Canvas Flow config: ${paths.configPath}`);
+    progress.log(`Canvas Flow home:   ${paths.homeDir}`);
+    progress.log(`Canvas Flow URL:    ${runtime.publicUrl}`);
+    if (!configExisted) {
+      progress.log('Created the default config.json.');
+      progress.log('Edit it with: canvas-flow config --edit');
+      progress.log('Show it with: canvas-flow config --show');
+    }
+
+    const shouldOpen = flags.open === true || (flags.open !== false && config.server.openBrowser === true);
+    progress.update(75, 'starting Canvas Flow API');
+    startupStatus = startStartupStatus(runtime.publicUrl, { openBrowser: shouldOpen, progress });
+    require(SERVER_ENTRY);
+  } catch (error) {
+    if (startupStatus) startupStatus.stop();
+    progress.fail('Canvas Flow startup failed.');
+    throw error;
   }
-  const paths = resolvePaths(flags);
-  ensureDir(paths.homeDir);
-  const configExisted = fs.existsSync(paths.configPath);
-  const config = loadConfig(paths.configPath);
-  const runtime = applyEnvironment(config, paths, flags);
-  await waitForMongo(config, flags, paths);
-
-  process.chdir(paths.homeDir);
-
-  console.log(`Canvas Flow config: ${paths.configPath}`);
-  console.log(`Canvas Flow home:   ${paths.homeDir}`);
-  console.log(`Canvas Flow URL:    ${runtime.publicUrl}`);
-  if (!configExisted) {
-    console.log('Created the default config.json.');
-    console.log('Edit it with: canvas-flow config --edit');
-    console.log('Show it with: canvas-flow config --show');
-  }
-
-  const shouldOpen = flags.open === true || (flags.open !== false && config.server.openBrowser === true);
-  if (shouldOpen) {
-    const timer = setTimeout(() => openBrowser(runtime.publicUrl), 1200);
-    if (typeof timer.unref === 'function') timer.unref();
-  }
-
-  require(SERVER_ENTRY);
 }
 
 async function main() {
