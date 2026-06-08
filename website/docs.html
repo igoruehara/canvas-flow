@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Como usar | Canvas Flow</title>
+    <meta name="description" content="Guia rapido para instalar, configurar e criar o primeiro agente no Canvas Flow.">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteudo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html" aria-current="page">Como usar</a>
+          <a href="agent-os.html">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html">Blog</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Guia de inicio</p>
+          <h1>Como usar o Canvas Flow</h1>
+          <p>Instale pelo npm, abra o editor, configure provedores e publique agentes para API, WhatsApp ou Web Widget.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav" aria-label="Navegacao desta pagina">
+          <strong>Nesta pagina</strong>
+          <a href="#install">Instalacao</a>
+          <a href="#first-agent">Primeiro agente</a>
+          <a href="#features">Features</a>
+          <a href="#production">Producao</a>
+        </aside>
+        <div class="content-main">
+          <section class="doc-section" id="install">
+            <h2>Instalacao standalone</h2>
+            <p>O jeito mais direto e rodar o pacote npm. Ele cria a configuracao local em `~/.canvas-flow/config.json` e sobe a API junto com o frontend.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#install-command">Copiar</button>
+              <pre><code id="install-command">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+            </div>
+            <p>Se voce ja tiver MongoDB local ou remoto configurado, rode sem Docker:</p>
+            <pre><code>npx @igoruehara/canvas-flow@latest --open</code></pre>
+          </section>
+
+          <section class="doc-section" id="first-agent">
+            <h2>Primeiro agente</h2>
+            <div class="steps">
+              <article class="step">
+                <div>
+                  <h3>Crie ou selecione um agente</h3>
+                  <p>Use o seletor de agente no topo do editor. Cada agente pode ter configuracao, provedores, documentos, memoria e versoes proprias.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Monte o fluxo</h3>
+                  <p>Adicione nodes de mensagem, input, RAG, MCP, API, condicao, aprovacao ou fim. Conecte os nodes no canvas.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Teste no painel lateral</h3>
+                  <p>Envie mensagens, veja trace, slots e estados de erro antes de publicar o fluxo para consumo externo.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Exponha por canal</h3>
+                  <p>Gere API keys, use o Web Widget, configure WhatsApp ou publique o agente como MCP server.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="features">
+            <h2>Features principais</h2>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Canvas visual</strong>
+                <p>Editor baseado em React Flow para desenhar jornadas conversacionais e automacoes.</p>
+              </article>
+              <article class="feature-card">
+                <strong>RAG</strong>
+                <p>Documentos, embeddings OpenAI, Milvus/Zilliz, Azure Search e filtros por agente.</p>
+              </article>
+              <article class="feature-card">
+                <strong>MCP</strong>
+                <p>Nodes MCP internos, MCP externo, OAuth, AWS SigV4 e exposicao de flows como tools MCP.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Agent OS</strong>
+                <p>`agents.md`, guardrails, rules, skills, subagents e manifesto de capacidades.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Canais</strong>
+                <p>API, Web Widget, WhatsApp, webhooks e chamadas server-to-server.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Operacao</strong>
+                <p>Memoria por conversa, releases, API keys, provider config, filas e checkpoints LangGraph.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="production">
+            <h2>Antes de colocar em producao</h2>
+            <p>Valide build, testes, audit, secrets e dependencias externas. Para uso real, configure MongoDB persistente, provedores LLM, armazenamento de documentos e politicas de aprovacao humana para tools sensiveis.</p>
+            <div class="callout">
+              <p>O arquivo `docs/PRODUCTION_READINESS.md` no repositorio concentra os gates tecnicos de producao.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="index.html">Home</a> · <a href="blog.html">Blog</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

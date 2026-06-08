@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Apresentando o Canvas Flow | Blog</title>
+    <meta name="description" content="Uma apresentacao do Canvas Flow, workspace visual para criar, testar e executar agentes de IA.">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteudo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html">Como usar</a>
+          <a href="agent-os.html">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html" aria-current="page">Blog</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title article">
+          <p class="article-meta">8 de junho de 2026 · Produto</p>
+          <h1>Apresentando o Canvas Flow</h1>
+          <p class="article-lead">Canvas Flow e um workspace para criar, testar e executar agentes de IA em fluxos visuais, com runtime standalone via npm.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <article class="section-inner article">
+          <p>O Canvas Flow nasceu para reduzir a distancia entre desenhar uma automacao com IA e colocar essa automacao rodando de verdade. Em vez de espalhar prompt, script, API, RAG, memoria e canal em lugares diferentes, o produto junta tudo em um canvas operacional.</p>
+
+          <img src="assets/screenshots/flow-editor.png" alt="Canvas visual do Canvas Flow com nodes conectados">
+
+          <h2>O que voce consegue criar</h2>
+          <p>O editor permite montar agentes com mensagens, inputs, chamadas HTTP, condicoes, RAG, MCP, aprovacao humana e finalizacao. O painel de teste mostra o comportamento do fluxo antes de publicar para usuarios reais.</p>
+          <ul>
+            <li>Agentes para API, Web Widget, WhatsApp e webhooks.</li>
+            <li>RAG com documentos e bases vetoriais.</li>
+            <li>Tools externas via MCP e APIs controladas.</li>
+            <li>Memoria por `agentId + conversationId`.</li>
+            <li>Versoes, releases, API keys e provider config.</li>
+          </ul>
+
+          <h2>Por que standalone via npm</h2>
+          <p>O pacote `@igoruehara/canvas-flow` entrega uma experiencia parecida com ferramentas locais de automacao: voce roda um comando, o backend NestJS sobe, o frontend estatico e servido e a configuracao privada fica fora do pacote publicado.</p>
+          <pre><code>npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+
+          <h2>Agent OS e MCP</h2>
+          <p>Para fluxos mais sofisticados, o Canvas Flow usa Agent OS: `agents.md`, guardrails, rules, skills, subagents e manifesto de capacidades. O agente orquestrador delega para especialistas internos, enquanto MCP conecta ferramentas externas e tambem permite expor flows como tools.</p>
+
+          <div class="callout">
+            <p>O resultado e uma arquitetura simples de explicar: Agent OS para raciocinio e delegacao interna, MCP para ferramentas, canais para consumo.</p>
+          </div>
+
+          <h2>Proximo passo</h2>
+          <p>Comece pelo guia de uso, crie um agente simples e depois adicione RAG, MCP ou canais conforme a necessidade do seu caso real.</p>
+          <div class="actions-row">
+            <a class="button primary" href="docs.html">Ir para o guia</a>
+            <a class="button" href="agent-os.html">Entender Agent OS</a>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="blog.html">Blog</a> · <a href="docs.html">Como usar</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

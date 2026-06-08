@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agent OS | Canvas Flow</title>
+    <meta name="description" content="Como o Agent OS organiza agents.md, guardrails, rules, skills, subagents e MCP no Canvas Flow.">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteudo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html">Como usar</a>
+          <a href="agent-os.html" aria-current="page">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html">Blog</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Arquitetura agentica</p>
+          <h1>Agent OS no Canvas Flow</h1>
+          <p>O Canvas Flow usa um contrato interno para organizar papel do agente, regras, capacidades e delegacao. Isso resolve a orquestracao dentro do produto sem precisar de A2A para tarefas internas.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav">
+          <strong>Nesta pagina</strong>
+          <a href="#model">Modelo</a>
+          <a href="#delegation">Delegacao</a>
+          <a href="#when-a2a">Quando A2A faria sentido</a>
+        </aside>
+        <div class="content-main">
+          <section class="doc-section" id="model">
+            <h2>Modelo mental</h2>
+            <p>O `agentSpec` e o manifesto do agente descrevem o que o agente e, o que ele pode usar e quais limites precisa respeitar.</p>
+            <div class="feature-grid">
+              <article class="feature-card" data-tone="green">
+                <strong>agents.md</strong>
+                <p>Define identidade, responsabilidades e arquitetura operacional.</p>
+              </article>
+              <article class="feature-card" data-tone="amber">
+                <strong>Guardrails e rules</strong>
+                <p>Separam limites duros de comportamentos obrigatorios.</p>
+              </article>
+              <article class="feature-card" data-tone="rose">
+                <strong>Skills e subagents</strong>
+                <p>Encapsulam especialidades e contexto isolado para delegacao controlada.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="delegation">
+            <h2>Delegacao interna</h2>
+            <p>Quando uma tarefa envolve decisao, varias tools ou integracao externa, o Assistente IA pode materializar uma arquitetura com Agent Plan, agente orquestrador, skill especialista e node MCP.</p>
+            <div class="steps">
+              <article class="step">
+                <div>
+                  <h3>Agent Plan</h3>
+                  <p>Registra a estrategia antes da execucao, incluindo dados de entrada, validacoes e criterio de sucesso.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Agente orquestrador</h3>
+                  <p>Escolhe a skill certa, respeita guardrails e decide quando chamar ferramentas.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Skill especialista</h3>
+                  <p>Recebe uma tarefa especifica, usa os MCPs permitidos e normaliza a resposta para o orquestrador.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Edges de manifesto</h3>
+                  <p>Representam dependencias agenticas sem transformar tudo em um caminho linear de execucao.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="when-a2a">
+            <h2>Quando A2A faria sentido</h2>
+            <p>Para a arquitetura interna, o Agent OS ja cobre a funcao pratica de delegar para especialistas. A2A faria sentido como adapter de borda, quando um agente Canvas Flow precisar conversar com agentes independentes de outros runtimes ou quando agentes externos precisarem descobrir e chamar um agente Canvas Flow.</p>
+            <div class="callout">
+              <p>Resumo: Agent OS para orquestracao interna; MCP para tools; A2A apenas se houver interoperabilidade entre agentes externos.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="docs.html">Como usar</a> · <a href="mcp.html">MCP</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

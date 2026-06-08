@@ -1,5 +1,7 @@
 # Canvas Flow
 
+Site publico: https://igoruehara.github.io/canvas-flow/
+
 Canvas Flow é um workspace para criar, testar e executar agentes de IA em fluxos visuais, com canais prontos para atendimento e automação via WhatsApp e Web Widget.
 
 Pastas principais:
