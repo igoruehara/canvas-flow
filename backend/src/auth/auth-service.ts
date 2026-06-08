@@ -184,9 +184,14 @@ export class AuthService implements OnModuleInit {
 
   async getConfig() {
     const usersCount = await this.model.countDocuments({ active: true }).exec().catch(() => 0);
+    const frontendApiToken = this.isLoginRequired()
+      ? ''
+      : String(this.configService.get<string>('CANVAS_FLOW_FRONTEND_API_TOKEN') || '').trim();
     return {
       loginRequired: this.isLoginRequired(),
       hasUsers: usersCount > 0,
+      apiToken: frontendApiToken || undefined,
+      apiTokenConfigured: Boolean(String(this.configService.get<string>('CANVAS_FLOW_API_TOKEN') || '').trim()),
     };
   }
 

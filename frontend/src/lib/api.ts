@@ -7,9 +7,16 @@ const API_URL = RAW_API_URL === '__CANVAS_FLOW_SAME_ORIGIN__'
 const API_TOKEN = import.meta.env.VITE_CANVAS_FLOW_API_TOKEN || '';
 const LOGIN_REQUIRED = String(import.meta.env.VITE_CANVAS_FLOW_LOGIN || '').toLowerCase() === 'true';
 const AUTH_STORAGE_KEY = 'canvas_flow_auth_token';
+let runtimeApiToken = '';
 export const CANVAS_FLOW_API_URL = API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 export const CANVAS_FLOW_API_TOKEN_CONFIGURED = Boolean(API_TOKEN);
 export const CANVAS_FLOW_LOGIN_REQUIRED = LOGIN_REQUIRED;
+type AuthConfigResponse = {
+  loginRequired: boolean;
+  hasUsers: boolean;
+  apiToken?: string;
+  apiTokenConfigured?: boolean;
+};
 export type LangGraphRuntimeSummary = {
   engine: 'langgraph';
   durable: boolean;
@@ -76,6 +83,10 @@ export function setCanvasFlowAuthToken(token: string) {
   else localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
+export function hasCanvasFlowAuthToken() {
+  return Boolean(getCanvasFlowAuthToken() || runtimeApiToken || API_TOKEN);
+}
+
 function queryString(params: Record<string, string | undefined>) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -86,8 +97,14 @@ function queryString(params: Record<string, string | undefined>) {
 }
 
 function authHeaders(): Record<string, string> {
-  const token = getCanvasFlowAuthToken() || API_TOKEN;
+  const token = getCanvasFlowAuthToken() || runtimeApiToken || API_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function applyRuntimeAuthConfig(config: AuthConfigResponse) {
+  if (!config.loginRequired && config.apiToken) {
+    runtimeApiToken = config.apiToken;
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -126,7 +143,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const canvasApi = {
   authConfig() {
-    return request<{ loginRequired: boolean; hasUsers: boolean }>('/api/auth/config');
+    return request<AuthConfigResponse>('/api/auth/config').then((config) => {
+      applyRuntimeAuthConfig(config);
+      return config;
+    });
   },
 
   login(payload: { email: string; password: string; organizationSlug?: string }) {

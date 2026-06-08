@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Copy, KeyRound, Loader2, RefreshCcw, ShieldCheck, Trash2 } from 'lucide-react';
-import { CANVAS_FLOW_API_TOKEN_CONFIGURED, canvasApi } from '../lib/api';
+import { canvasApi, hasCanvasFlowAuthToken } from '../lib/api';
 import type { CanvasFlowApiKeyRecord, CreatedCanvasFlowApiKey } from '../types/flow';
 
 type ApiKeyScope = 'global' | 'flow';
@@ -110,7 +110,7 @@ export function ApiKeysModal({ flowId, flowName, agentId }: ApiKeysModalProps) {
         </button>
       </div>
 
-      {!CANVAS_FLOW_API_TOKEN_CONFIGURED && (
+      {!hasCanvasFlowAuthToken() && (
         <div className="api-keys-warning">
           Configure <code>VITE_CANVAS_FLOW_API_TOKEN</code> no frontend com o token master para gerenciar chaves por esta tela.
         </div>

@@ -56,6 +56,7 @@ async function main() {
       ...process.env,
       VITE_CANVAS_FLOW_API_URL: '__CANVAS_FLOW_SAME_ORIGIN__',
       VITE_CANVAS_FLOW_API_TOKEN: '',
+      VITE_CANVAS_FLOW_LOGIN: 'false',
     },
   });
 
