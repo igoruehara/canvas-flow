@@ -303,7 +303,7 @@ pre code {
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
   gap: 1rem;
 }
 
@@ -609,11 +609,21 @@ pre code {
     background-position: 58% center;
   }
 
-  .feature-grid,
   .screenshot-grid,
   .split,
   .content-grid,
   .blog-list {
+    grid-template-columns: 1fr;
+  }
+
+  .side-nav {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 1080px) {
+  .content-grid {
     grid-template-columns: 1fr;
   }
 
