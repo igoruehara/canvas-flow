@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Canvas Flow | Visual AI agent workflows</title>
+    <meta name="description" content="Canvas Flow is a workspace to build, test, and run AI agents with visual workflows, RAG, MCP, memory, API, WhatsApp, and Web Widget channels.">
+    <meta property="og:title" content="Canvas Flow">
+    <meta property="og:description" content="Build AI agents with visual workflows and run them through a standalone npm package.">
+    <meta property="og:type" content="website">
+    <link rel="alternate" hreflang="pt-BR" href="../index.html">
+    <link rel="stylesheet" href="../assets/styles.css">
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html" aria-label="Canvas Flow English home">
+          <span class="brand-mark">CF</span>
+          <span>Canvas Flow</span>
+        </a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Open menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="#start">Start</a>
+          <a href="#features">Features</a>
+          <a href="#agent-os">Agent OS</a>
+          <a href="#mcp">MCP</a>
+          <a href="#blog">Blog</a>
+          <a href="../index.html" hreflang="pt-BR">PT-BR</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <section class="hero">
+        <div class="hero-inner">
+          <p class="eyebrow">Visual workspace for AI automation</p>
+          <h1>Canvas Flow</h1>
+          <p class="hero-copy">
+            Build, test, and run AI agents with visual workflows, RAG, MCP, conversation memory, API access, WhatsApp, and Web Widget channels.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#start">Get started</a>
+            <a class="button ghost" href="#agent-os">Explore Agent OS</a>
+          </div>
+          <div class="command-strip" aria-label="Installation command">
+            <pre><code>npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="start">
+        <div class="section-inner split">
+          <div>
+            <div class="section-heading">
+              <h2>Run it locally in minutes</h2>
+              <p>The standalone npm package serves the static frontend and the NestJS API from the same Node process. Docker can start MongoDB and Milvus locally when you want a full RAG sandbox.</p>
+            </div>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#en-quickstart-command">Copy</button>
+              <pre><code id="en-quickstart-command">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+            </div>
+          </div>
+          <figure class="screenshot-frame">
+            <img src="../assets/screenshots/flow-editor-test-panel.png" alt="Canvas Flow editor with the test panel open">
+          </figure>
+        </div>
+      </section>
+
+      <section class="section alt" id="features">
+        <div class="section-inner">
+          <div class="section-heading">
+            <h2>Core features</h2>
+            <p>Canvas Flow brings the workflow editor, agent runtime, external tools, memory, and channels into one operational workspace.</p>
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card" data-tone="green">
+              <strong>Visual canvas</strong>
+              <p>Design flows with message, input, RAG, MCP, API, condition, approval, and end nodes.</p>
+            </article>
+            <article class="feature-card" data-tone="amber">
+              <strong>Standalone runtime</strong>
+              <p>Run frontend and backend together through `npx`, with local Docker infrastructure or remote services.</p>
+            </article>
+            <article class="feature-card" data-tone="rose">
+              <strong>Channels</strong>
+              <p>Expose agents through API keys, Web Widget, WhatsApp, webhooks, and MCP clients.</p>
+            </article>
+            <article class="feature-card">
+              <strong>RAG</strong>
+              <p>Use documents, OpenAI embeddings, Milvus/Zilliz, Azure Search, and agent-scoped retrieval.</p>
+            </article>
+            <article class="feature-card">
+              <strong>Memory and versions</strong>
+              <p>Keep conversation memory by agent and conversation, with releases, API keys, and LangGraph checkpoints.</p>
+            </article>
+            <article class="feature-card">
+              <strong>Provider config</strong>
+              <p>Configure LLM providers, storage, channels, OAuth, and secrets outside the published package.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="agent-os">
+        <div class="section-inner split">
+          <div class="section-heading">
+            <h2>Agent OS for internal delegation</h2>
+            <p>`agents.md`, guardrails, rules, skills, subagents, and mcpServers define the agent contract. The orchestrator can plan, choose capabilities, and delegate to specialized skills without needing an external agent-to-agent protocol inside the product.</p>
+            <div class="actions-row">
+              <a class="button primary" href="../agent-os.html">Read the PT-BR guide</a>
+              <a class="button" href="#mcp">See MCP</a>
+            </div>
+          </div>
+          <div class="steps">
+            <article class="step">
+              <div>
+                <h3>Agent Plan</h3>
+                <p>Captures the strategy, validation points, inputs, outputs, and success criteria before execution.</p>
+              </div>
+            </article>
+            <article class="step">
+              <div>
+                <h3>Orchestrator</h3>
+                <p>Selects the right skills, respects guardrails, and decides when tools should be called.</p>
+              </div>
+            </article>
+            <article class="step">
+              <div>
+                <h3>Specialist skills</h3>
+                <p>Handle focused tasks, use allowed MCP servers, and normalize responses back to the orchestrator.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section dark" id="mcp">
+        <div class="section-inner">
+          <div class="section-heading">
+            <h2>MCP for tools and external systems</h2>
+            <p>MCP is the integration layer for tools. Canvas Flow can call external MCP servers, discover tools with `listTools`, execute `callTool`, and expose saved flows as MCP tools for external clients.</p>
+          </div>
+          <div class="feature-grid">
+            <article class="metric-card">
+              <strong>External MCP</strong>
+              <p>Connect through Streamable HTTP, SSE, or WebSocket.</p>
+            </article>
+            <article class="metric-card">
+              <strong>OAuth and SigV4</strong>
+              <p>Keep authorization in the node configuration instead of spreading secrets through prompts.</p>
+            </article>
+            <article class="metric-card">
+              <strong>Flow-to-MCP</strong>
+              <p>Let MCP clients call saved Canvas Flow agents with JSON-RPC 2.0.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="blog">
+        <div class="section-inner">
+          <div class="section-heading">
+            <h2>Product notes</h2>
+            <p>The PT-BR blog includes the first product overview and practical notes about the architecture.</p>
+          </div>
+          <div class="blog-list">
+            <a class="blog-card" href="../blog-introducing-canvas-flow.html">
+              <span>Product</span>
+              <strong>Introducing Canvas Flow</strong>
+              <p>A direct overview of the tool, the standalone runtime, and the main building blocks.</p>
+            </a>
+            <a class="blog-card" href="../mcp.html">
+              <span>Integrations</span>
+              <strong>MCP in Canvas Flow</strong>
+              <p>From MCP nodes to exposing saved flows as tools for external clients.</p>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="../index.html">PT-BR</a> · <a href="https://github.com/igoruehara/canvas-flow">GitHub</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

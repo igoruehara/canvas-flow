@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Como usar | Canvas Flow</title>
-    <meta name="description" content="Guia rapido para instalar, configurar e criar o primeiro agente no Canvas Flow.">
+    <meta name="description" content="Guia rápido para instalar, configurar e criar o primeiro agente no Canvas Flow.">
     <link rel="stylesheet" href="assets/styles.css">
     <script src="assets/site.js" defer></script>
   </head>
   <body>
-    <a class="skip-link" href="#conteudo">Ir para o conteudo</a>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
     <header class="site-header">
       <div class="nav-shell">
         <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
@@ -20,6 +20,7 @@
           <a href="agent-os.html">Agent OS</a>
           <a href="mcp.html">MCP</a>
           <a href="blog.html">Blog</a>
+          <a href="en/index.html" hreflang="en">EN</a>
           <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
         </nav>
       </div>
@@ -35,22 +36,22 @@
       </section>
 
       <div class="content-grid">
-        <aside class="side-nav" aria-label="Navegacao desta pagina">
-          <strong>Nesta pagina</strong>
-          <a href="#install">Instalacao</a>
+        <aside class="side-nav" aria-label="Navegação desta página">
+          <strong>Nesta página</strong>
+          <a href="#install">Instalação</a>
           <a href="#first-agent">Primeiro agente</a>
           <a href="#features">Features</a>
-          <a href="#production">Producao</a>
+          <a href="#production">Produção</a>
         </aside>
         <div class="content-main">
           <section class="doc-section" id="install">
-            <h2>Instalacao standalone</h2>
-            <p>O jeito mais direto e rodar o pacote npm. Ele cria a configuracao local em `~/.canvas-flow/config.json` e sobe a API junto com o frontend.</p>
+            <h2>Instalação standalone</h2>
+            <p>O jeito mais direto é rodar o pacote npm. Ele cria a configuração local em `~/.canvas-flow/config.json` e sobe a API junto com o frontend.</p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="#install-command">Copiar</button>
               <pre><code id="install-command">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
             </div>
-            <p>Se voce ja tiver MongoDB local ou remoto configurado, rode sem Docker:</p>
+            <p>Se você já tiver MongoDB local ou remoto configurado, rode sem Docker:</p>
             <pre><code>npx @igoruehara/canvas-flow@latest --open</code></pre>
           </section>
 
@@ -60,13 +61,13 @@
               <article class="step">
                 <div>
                   <h3>Crie ou selecione um agente</h3>
-                  <p>Use o seletor de agente no topo do editor. Cada agente pode ter configuracao, provedores, documentos, memoria e versoes proprias.</p>
+                  <p>Use o seletor de agente no topo do editor. Cada agente pode ter configuração, provedores, documentos, memória e versões próprias.</p>
                 </div>
               </article>
               <article class="step">
                 <div>
                   <h3>Monte o fluxo</h3>
-                  <p>Adicione nodes de mensagem, input, RAG, MCP, API, condicao, aprovacao ou fim. Conecte os nodes no canvas.</p>
+                  <p>Adicione nodes de mensagem, input, RAG, MCP, API, condição, aprovação ou fim. Conecte os nodes no canvas.</p>
                 </div>
               </article>
               <article class="step">
@@ -89,7 +90,7 @@
             <div class="feature-grid">
               <article class="feature-card">
                 <strong>Canvas visual</strong>
-                <p>Editor baseado em React Flow para desenhar jornadas conversacionais e automacoes.</p>
+                <p>Editor baseado em React Flow para desenhar jornadas conversacionais e automações.</p>
               </article>
               <article class="feature-card">
                 <strong>RAG</strong>
@@ -97,7 +98,7 @@
               </article>
               <article class="feature-card">
                 <strong>MCP</strong>
-                <p>Nodes MCP internos, MCP externo, OAuth, AWS SigV4 e exposicao de flows como tools MCP.</p>
+                <p>Nodes MCP internos, MCP externo, OAuth, AWS SigV4 e exposição de flows como tools MCP.</p>
               </article>
               <article class="feature-card">
                 <strong>Agent OS</strong>
@@ -108,17 +109,17 @@
                 <p>API, Web Widget, WhatsApp, webhooks e chamadas server-to-server.</p>
               </article>
               <article class="feature-card">
-                <strong>Operacao</strong>
-                <p>Memoria por conversa, releases, API keys, provider config, filas e checkpoints LangGraph.</p>
+                <strong>Operação</strong>
+                <p>Memória por conversa, releases, API keys, provider config, filas e checkpoints LangGraph.</p>
               </article>
             </div>
           </section>
 
           <section class="doc-section" id="production">
-            <h2>Antes de colocar em producao</h2>
-            <p>Valide build, testes, audit, secrets e dependencias externas. Para uso real, configure MongoDB persistente, provedores LLM, armazenamento de documentos e politicas de aprovacao humana para tools sensiveis.</p>
+            <h2>Antes de colocar em produção</h2>
+            <p>Valide build, testes, audit, secrets e dependências externas. Para uso real, configure MongoDB persistente, provedores LLM, armazenamento de documentos e políticas de aprovação humana para tools sensíveis.</p>
             <div class="callout">
-              <p>O arquivo `docs/PRODUCTION_READINESS.md` no repositorio concentra os gates tecnicos de producao.</p>
+              <p>O arquivo `docs/PRODUCTION_READINESS.md` no repositório concentra os gates técnicos de produção.</p>
             </div>
           </section>
         </div>

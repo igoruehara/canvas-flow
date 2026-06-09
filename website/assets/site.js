@@ -17,12 +17,14 @@ document.querySelectorAll('[data-copy]').forEach((button) => {
     try {
       await navigator.clipboard.writeText(text);
       const original = button.textContent;
-      button.textContent = 'Copiado';
+      const isEnglish = document.documentElement.lang?.toLowerCase().startsWith('en');
+      button.textContent = isEnglish ? 'Copied' : 'Copiado';
       window.setTimeout(() => {
         button.textContent = original;
       }, 1400);
     } catch {
-      button.textContent = 'Copie manualmente';
+      const isEnglish = document.documentElement.lang?.toLowerCase().startsWith('en');
+      button.textContent = isEnglish ? 'Copy manually' : 'Copie manualmente';
     }
   });
 });

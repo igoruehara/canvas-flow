@@ -9,7 +9,7 @@
     <script src="assets/site.js" defer></script>
   </head>
   <body>
-    <a class="skip-link" href="#conteudo">Ir para o conteudo</a>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
     <header class="site-header">
       <div class="nav-shell">
         <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
@@ -20,6 +20,7 @@
           <a href="agent-os.html">Agent OS</a>
           <a href="mcp.html" aria-current="page">MCP</a>
           <a href="blog.html">Blog</a>
+          <a href="en/index.html" hreflang="en">EN</a>
           <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
         </nav>
       </div>
@@ -28,15 +29,15 @@
     <main id="conteudo">
       <section class="page-hero">
         <div class="page-title">
-          <p class="eyebrow">Ferramentas e integracoes</p>
+          <p class="eyebrow">Ferramentas e integrações</p>
           <h1>MCP no Canvas Flow</h1>
-          <p>Use MCP para ligar agentes a ferramentas externas, descobrir operacoes disponiveis e expor flows salvos como tools consumiveis por clientes MCP.</p>
+          <p>Use MCP para ligar agentes a ferramentas externas, descobrir operações disponíveis e expor flows salvos como tools consumíveis por clientes MCP.</p>
         </div>
       </section>
 
       <div class="content-grid">
         <aside class="side-nav">
-          <strong>Nesta pagina</strong>
+          <strong>Nesta página</strong>
           <a href="#node">Node MCP</a>
           <a href="#external">MCP externo</a>
           <a href="#server">Flow-to-MCP</a>
@@ -44,7 +45,7 @@
         <div class="content-main">
           <section class="doc-section" id="node">
             <h2>Node MCP</h2>
-            <p>O node MCP pode funcionar como uma tool operacional dentro do fluxo: recebe instrucao, monta argumentos, chama a API ou servidor MCP e devolve resultado estruturado para os proximos nodes.</p>
+            <p>O node MCP pode funcionar como uma tool operacional dentro do fluxo: recebe instrução, monta argumentos, chama a API ou servidor MCP e devolve resultado estruturado para os próximos nodes.</p>
             <div class="feature-grid">
               <article class="feature-card">
                 <strong>API mode</strong>
@@ -56,14 +57,14 @@
               </article>
               <article class="feature-card">
                 <strong>LLM mapping</strong>
-                <p>Permite gerar argumentos ou normalizar output com LLM quando a integracao exigir.</p>
+                <p>Permite gerar argumentos ou normalizar output com LLM quando a integração exigir.</p>
               </article>
             </div>
           </section>
 
           <section class="doc-section" id="external">
             <h2>MCP externo</h2>
-            <p>Para integracoes como Google Workspace, AWS, Jira ou GitLab, o fluxo pode primeiro executar `listTools` e depois configurar `callTool` com argumentos seguros. OAuth e AWS SigV4 ficam no node, nao espalhados pelo prompt do agente.</p>
+            <p>Para integrações como Google Workspace, AWS, Jira ou GitLab, o fluxo pode primeiro executar `listTools` e depois configurar `callTool` com argumentos seguros. OAuth e AWS SigV4 ficam no node, não espalhados pelo prompt do agente.</p>
             <pre><code>{
   "mcpExternalOperation": "listTools",
   "mcpExternalTransport": "streamable_http",
@@ -73,7 +74,7 @@
 
           <section class="doc-section" id="server">
             <h2>Flow-to-MCP</h2>
-            <p>Um agente Canvas Flow tambem pode ser consumido como MCP server. Cada flow salvo aparece como uma tool e clientes externos chamam `initialize`, `tools/list` e `tools/call` por JSON-RPC 2.0.</p>
+            <p>Um agente Canvas Flow também pode ser consumido como MCP server. Cada flow salvo aparece como uma tool e clientes externos chamam `initialize`, `tools/list` e `tools/call` por JSON-RPC 2.0.</p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="#mcp-curl">Copiar</button>
               <pre><code id="mcp-curl">curl -X POST "https://seu-host/api/canvas-flow/mcp/default-agent" \
