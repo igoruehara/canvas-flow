@@ -31,7 +31,7 @@
         <div class="page-title">
           <p class="eyebrow">Arquitetura agentica</p>
           <h1>Agent OS no Canvas Flow</h1>
-          <p>O Canvas Flow usa um contrato interno para organizar papel do agente, regras, capacidades e delegação. Isso resolve a orquestração dentro do produto sem precisar de A2A para tarefas internas.</p>
+          <p>O Canvas Flow usa um contrato interno para organizar papel do agente, regras, capacidades e delegação. Isso mantém a orquestração dentro do produto com agente orquestrador, skills e subagents.</p>
         </div>
       </section>
 
@@ -40,7 +40,6 @@
           <strong>Nesta página</strong>
           <a href="#model">Modelo</a>
           <a href="#delegation">Delegação</a>
-          <a href="#when-a2a">Quando A2A faria sentido</a>
         </aside>
         <div class="content-main">
           <section class="doc-section" id="model">
@@ -93,13 +92,6 @@
             </div>
           </section>
 
-          <section class="doc-section" id="when-a2a">
-            <h2>Quando A2A faria sentido</h2>
-            <p>Para a arquitetura interna, o Agent OS já cobre a função prática de delegar para especialistas. A2A faria sentido como adapter de borda, quando um agente Canvas Flow precisar conversar com agentes independentes de outros runtimes ou quando agentes externos precisarem descobrir e chamar um agente Canvas Flow.</p>
-            <div class="callout">
-              <p>Resumo: Agent OS para orquestração interna; MCP para tools; A2A apenas se houver interoperabilidade entre agentes externos.</p>
-            </div>
-          </section>
         </div>
       </div>
     </main>
