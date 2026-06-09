@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Provedores de IA e dados | Canvas Flow</title>
+    <meta name="description" content="Como configurar provedores LLM, embeddings, storage e bancos usados pelos agentes do Canvas Flow.">
+    <link rel="alternate" hreflang="en" href="en/docs.html">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html">Como usar</a>
+          <a href="agent-os.html">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html">Blog</a>
+          <a href="en/index.html" hreflang="en">EN</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Configuração</p>
+          <h1>Provedores de IA, RAG e dados</h1>
+          <p>Configure modelos LLM, embeddings, OCR, bancos vetoriais, storage e MongoDB por ambiente ou direto no painel de provedores.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav" aria-label="Navegação desta página">
+          <strong>Nesta página</strong>
+          <a href="#llm">LLM</a>
+          <a href="#provider-panel">Painel</a>
+          <a href="#rag">RAG e storage</a>
+          <a href="#env">Variáveis</a>
+        </aside>
+
+        <div class="content-main">
+          <section class="doc-section" id="llm">
+            <h2>Provedores LLM suportados</h2>
+            <p>O Canvas Flow resolve o provedor efetivo a partir da configuração salva no agente, da configuração global ou das variáveis de ambiente. O mesmo agente pode usar o provedor padrão ou selecionar modelo específico em nodes como Agente, RAG, MCP, Arquivos e Dashboard.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>OpenAI</strong>
+                <p>Use `OPENAI_API_KEY`, `OPENAI_CHAT_MODEL`, `OPENAI_EMBEDDING_MODEL` e `OPENAI_OCR_MODEL`. É o caminho mais direto para chat, embeddings e OCR.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Azure OpenAI</strong>
+                <p>Use endpoint, chave, versão da API e nomes de deployment para chat, embeddings e OCR. Defina `OPENAI_PROVIDER=azure` ou habilite Azure no painel.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Gemini</strong>
+                <p>Use `GEMINI_API_KEY` ou `GOOGLE_AI_API_KEY` e defina o modelo por `GEMINI_CHAT_MODEL` quando quiser rodar geração pelo Google AI.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Claude</strong>
+                <p>Use `ANTHROPIC_API_KEY` ou `CLAUDE_API_KEY` e escolha o modelo com `CLAUDE_CHAT_MODEL` ou `ANTHROPIC_MODEL`.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Grok</strong>
+                <p>Use `XAI_API_KEY` ou `GROK_API_KEY`, além de `XAI_BASE_URL`/`GROK_BASE_URL` quando precisar apontar para outro endpoint compatível.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Bedrock</strong>
+                <p>Use `BEDROCK_API_KEY`, `BEDROCK_BASE_URL`, `AWS_REGION` ou `BEDROCK_REGION`. O node envia chamadas para o modelo configurado no runtime.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="provider-panel">
+            <h2>Configuração pelo painel</h2>
+            <p>No editor, abra a área de provedores e salve configurações globais ou específicas do agente. Segredos ficam mascarados na leitura e preservados quando você edita campos não sensíveis.</p>
+            <div class="steps">
+              <article class="step">
+                <div>
+                  <h3>Escolha o escopo</h3>
+                  <p>Use configuração global para defaults do workspace ou configuração por agente quando um agente precisar de chave/modelo isolado.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Preencha o provedor</h3>
+                  <p>Informe chave, modelo e endpoints. Para Azure OpenAI, lembre que deployment e modelo podem ser nomes diferentes.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Teste no fluxo</h3>
+                  <p>Adicione um node Agente ou RAG, envie uma mensagem pelo painel de teste e confira trace, slots e mensagens geradas.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="rag">
+            <h2>RAG, storage e bancos</h2>
+            <p>Além do LLM, os componentes de dados usam provedores próprios. Configure só o que o seu fluxo realmente usa.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Milvus/Zilliz</strong>
+                <p>Use `MILVUS_ADDRESS`, token ou usuário/senha e `COLLECTION_NAME`. Serve para busca vetorial e híbrida nos componentes RAG e Milvus.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Azure AI Search</strong>
+                <p>Use endpoint, API key, índice e versão da API. Pode ser fonte de busca em RAG e dashboards.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Azure Blob Storage</strong>
+                <p>Use connection string e container para guardar documentos, payloads e artefatos gerados por flows.</p>
+              </article>
+              <article class="feature-card">
+                <strong>MongoDB de componente</strong>
+                <p>Use `MONGO_COMPONENT_CONNECTION_STRING` e `MONGO_COMPONENT_DB_NAME` para operações CRUD do node MongoDB sem misturar com o banco interno do Canvas Flow.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="env">
+            <h2>Exemplo de configuração local</h2>
+            <p>Depois do primeiro start, abra `~/.canvas-flow/config.json` pelo comando global ou edite variáveis equivalentes no ambiente de deploy.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#providers-env">Copiar</button>
+              <pre><code id="providers-env">OPENAI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_CHAT_MODEL=gpt-4o
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+
+MILVUS_ADDRESS=http://localhost:19530
+COLLECTION_NAME=canvas_flow_docs
+
+MONGO_COMPONENT_CONNECTION_STRING=mongodb://localhost:27017
+MONGO_COMPONENT_DB_NAME=canvas_flow_components</code></pre>
+            </div>
+            <div class="callout">
+              <p>Para produção, prefira variáveis de ambiente ou secret manager. API keys e tokens não devem ser versionados no repositório.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="docs.html">Como usar</a> · <a href="components.html">Componentes</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

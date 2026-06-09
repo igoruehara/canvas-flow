@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Componentes | Canvas Flow</title>
+    <meta name="description" content="Referência dos nodes e componentes existentes no Canvas Flow.">
+    <link rel="alternate" hreflang="en" href="en/docs.html">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html">Como usar</a>
+          <a href="agent-os.html">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html">Blog</a>
+          <a href="en/index.html" hreflang="en">EN</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Referência</p>
+          <h1>Componentes existentes</h1>
+          <p>Um mapa rápido dos nodes básicos e componentes operacionais disponíveis no editor visual do Canvas Flow.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav" aria-label="Navegação desta página">
+          <strong>Nesta página</strong>
+          <a href="#base-nodes">Nodes básicos</a>
+          <a href="#ai">IA</a>
+          <a href="#rag-data">RAG e dados</a>
+          <a href="#actions">Ações</a>
+          <a href="#control">Controle</a>
+        </aside>
+
+        <div class="content-main">
+          <section class="doc-section" id="base-nodes">
+            <h2>Nodes básicos do fluxo</h2>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Mensagem</strong>
+                <p>Envia texto para o usuário e pode usar templates com `context.slots`.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Mensagem rica</strong>
+                <p>Renderiza botões, quick replies, listas, carrosséis, imagem, documento e fluxos interativos de atendimento.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Input</strong>
+                <p>Coleta resposta do usuário, salva em `responseName` e valida por tipo, regex ou LLM.</p>
+              </article>
+              <article class="feature-card">
+                <strong>API</strong>
+                <p>Executa chamada HTTP direta dentro do fluxo, com headers, query, body e mapeamento de resposta.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Condição</strong>
+                <p>Decide o próximo caminho por JavaScript ou LLM a partir do contexto atual.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Fim</strong>
+                <p>Finaliza a execução atual e marca a conversa como encerrada quando o fluxo pede.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Grupo</strong>
+                <p>Organiza visualmente blocos do canvas sem alterar a lógica de execução.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="ai">
+            <h2>IA e orquestração</h2>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Agente</strong>
+                <p>Node LLM principal com modelo, temperatura, prompt, Agent OS, skills, subagents, rules e guardrails.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Azure OpenAI</strong>
+                <p>Variação especializada para deployment Azure OpenAI em fluxos que precisam fixar esse provedor no node.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Agent Plan</strong>
+                <p>Cria um contrato visual de planejamento em `context.slots.agentPlan` para orientar ou fixar a estratégia antes das tools.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Aprovação humana</strong>
+                <p>Pausa a execução antes de ações sensíveis e continua quando a API ou operador envia aprovar/reprovar.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="rag-data">
+            <h2>RAG, arquivos e dados</h2>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>RAG IA Gen</strong>
+                <p>Busca documentos, aplica filtros e usa LLM para gerar a resposta final com contexto recuperado.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Milvus</strong>
+                <p>Executa busca vetorial ou híbrida no Milvus/Zilliz e salva documentos encontrados no contexto.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Azure AI Search</strong>
+                <p>Consulta índices do Azure AI Search e alimenta o fluxo com documentos relevantes.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Azure Blob Storage</strong>
+                <p>Grava e lê payloads, documentos ou artefatos em containers Azure Blob.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Arquivos</strong>
+                <p>Lê upload ou URL, extrai texto, responde com LLM ou gera/edita documentos como TXT, MD, CSV, JSON, HTML, DOCX, XLSX e PDF.</p>
+              </article>
+              <article class="feature-card">
+                <strong>MongoDB</strong>
+                <p>Executa insert, find, update, upsert, delete, count e aggregate em collections de negócio.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Contexto</strong>
+                <p>Cria ou atualiza slots por JSON dinâmico, JavaScript ou LLM para preparar dados dos próximos nodes.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Dashboard</strong>
+                <p>Monta cards, tabelas e gráficos a partir de trace, MongoDB, API ou Milvus, com apoio opcional de LLM.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="actions">
+            <h2>Ações e integrações</h2>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>MCP</strong>
+                <p>Chama APIs como tools internas ou conecta servidores MCP externos por Streamable HTTP, SSE ou WebSocket.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Webhook</strong>
+                <p>Recebe eventos externos, envia callbacks ou escuta eventos assíncronos com autenticação por bearer, header ou query.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Debug</strong>
+                <p>Registra snapshot do contexto atual para entender slots, input, flow ativo e decisões durante o teste.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="control">
+            <h2>Controle e automação</h2>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Loop</strong>
+                <p>Repete uma saída até atingir limite de iterações ou até uma condição JavaScript interromper a repetição.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Roteador de fluxo</strong>
+                <p>Envia a conversa para outro flow por regras JavaScript ou decisão LLM, com fallback configurável.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Cron</strong>
+                <p>Agenda execuções por intervalo, dia, semana ou mês e injeta texto/slots iniciais na rotina automática.</p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="api.html">API</a> · <a href="mcp.html">MCP</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

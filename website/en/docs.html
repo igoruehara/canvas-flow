@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Docs | Canvas Flow</title>
+    <meta name="description" content="Operational docs for Canvas Flow providers, channels, API, webhooks, cron, and components.">
+    <link rel="alternate" hreflang="pt-BR" href="../docs.html">
+    <link rel="stylesheet" href="../assets/styles.css">
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Open menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html" aria-current="page">Docs</a>
+          <a href="../agent-os.html">Agent OS</a>
+          <a href="../mcp.html">MCP</a>
+          <a href="../blog.html">Blog</a>
+          <a href="../docs.html" hreflang="pt-BR">PT-BR</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="content">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Operational guide</p>
+          <h1>Canvas Flow docs</h1>
+          <p>Configure LLM providers, publish agents to WhatsApp or Web Widget, consume the API, receive webhooks, run cron jobs, and understand the component catalog.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav" aria-label="Page navigation">
+          <strong>On this page</strong>
+          <a href="#providers">Providers</a>
+          <a href="#channels">Channels</a>
+          <a href="#api">API</a>
+          <a href="#webhook-cron">Webhook and cron</a>
+          <a href="#components">Components</a>
+        </aside>
+
+        <div class="content-main">
+          <section class="doc-section" id="providers">
+            <h2>LLM and data providers</h2>
+            <p>Provider settings can come from environment variables, global provider config, or agent-specific provider config. Agent-level settings are useful when one agent needs isolated credentials or a different model.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>LLM providers</strong>
+                <p>OpenAI, Azure OpenAI, Gemini, Claude, Grok, and Bedrock are available for agent generation and LLM-assisted components.</p>
+              </article>
+              <article class="feature-card">
+                <strong>RAG providers</strong>
+                <p>Milvus/Zilliz, Azure AI Search, Azure Blob Storage, and OpenAI embeddings cover retrieval, indexing, and document storage.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Component data</strong>
+                <p>Use the MongoDB component connection for business CRUD without mixing it with the internal Canvas Flow database.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="channels">
+            <h2>WhatsApp and Web Widget</h2>
+            <p>WhatsApp supports Meta Cloud API, Blip, and Sinch. Web Widget gives you an embeddable chat UI backed by the same runtime API and conversation memory.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#en-whatsapp">Copy</button>
+              <pre><code id="en-whatsapp">GET  https://your-host/api/canvas-flow/webhook/whatsapp/&lt;FLOW_ID&gt;
+POST https://your-host/api/canvas-flow/webhook/whatsapp/&lt;FLOW_ID&gt;
+
+GET  https://your-host/api/canvas-flow/webhook/whatsapp-main/&lt;AGENT_ID&gt;
+POST https://your-host/api/canvas-flow/webhook/whatsapp-main/&lt;AGENT_ID&gt;</code></pre>
+            </div>
+            <p>For the widget, copy the generated embed snippet from the provider panel and route browser calls through your backend/proxy. Keep the run-scoped API key on the server side.</p>
+          </section>
+
+          <section class="doc-section" id="api">
+            <h2>Consume the runtime API</h2>
+            <p>Use `POST /api/canvas-flow/test` to run a saved flow or an inline config. Authentication accepts `Authorization: Bearer`, `x-api-key`, or `x-canvas-flow-token`.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#en-run-flow">Copy</button>
+              <pre><code id="en-run-flow">curl -X POST "http://localhost:3333/api/canvas-flow/test" \
+  -H "Authorization: Bearer &lt;CF_API_KEY&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "default-agent",
+    "flowId": "&lt;FLOW_ID&gt;",
+    "text": "I need help",
+    "conversationId": "customer-123",
+    "channel": "webWidget",
+    "slots": {
+      "source": "site"
+    }
+  }'</code></pre>
+            </div>
+          </section>
+
+          <section class="doc-section" id="webhook-cron">
+            <h2>Webhook and cron</h2>
+            <p>Inbound Webhook components expose `GET` and `POST` routes, validate the secret configured in the node, and inject the event into `context.slots.webhook`. Cron components schedule flows by interval, day, week, or month.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Custom webhook</strong>
+                <p>`/api/canvas-flow/webhook/custom/:flowId/:webhookId` receives external events and can start from the webhook node or the flow start.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Cron runner</strong>
+                <p>`POST /api/canvas-flow/cron/run-due` executes due cron flows manually or from external schedulers.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Queue mode</strong>
+                <p>When the queue is enabled, runtime calls can be tracked as jobs through the SQS job endpoints.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="components">
+            <h2>Component catalog</h2>
+            <p>The editor includes basic flow nodes plus operational components for AI, RAG, data, actions, control, and automation.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Basic nodes</strong>
+                <p>Message, Rich Message, Input, API, Condition, End, and Group.</p>
+              </article>
+              <article class="feature-card">
+                <strong>AI</strong>
+                <p>Agent, Azure OpenAI, Agent Plan, and Human Approval.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Data and RAG</strong>
+                <p>RAG AI Gen, Milvus, Azure AI Search, Azure Blob Storage, Files, MongoDB, Context, and Dashboard.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Actions and control</strong>
+                <p>MCP, Webhook, Debug, Loop, Flow Router, and Cron.</p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="../docs.html">PT-BR docs</a> · <a href="https://github.com/igoruehara/canvas-flow">GitHub</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

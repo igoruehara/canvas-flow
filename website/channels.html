@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WhatsApp e Web Widget | Canvas Flow</title>
+    <meta name="description" content="Guia para publicar agentes Canvas Flow em WhatsApp e Web Widget.">
+    <link rel="alternate" hreflang="en" href="en/docs.html">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html">Como usar</a>
+          <a href="agent-os.html">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html">Blog</a>
+          <a href="en/index.html" hreflang="en">EN</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Canais</p>
+          <h1>WhatsApp e Web Widget</h1>
+          <p>Publique o mesmo agente em canais conversacionais, mantendo memória por conversa, rate limit e configuração de provedor no Canvas Flow.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav" aria-label="Navegação desta página">
+          <strong>Nesta página</strong>
+          <a href="#whatsapp">WhatsApp</a>
+          <a href="#whatsapp-webhooks">Webhooks Meta</a>
+          <a href="#widget">Web Widget</a>
+          <a href="#embed">Embed</a>
+        </aside>
+
+        <div class="content-main">
+          <section class="doc-section" id="whatsapp">
+            <h2>WhatsApp</h2>
+            <p>O canal WhatsApp pode usar Meta Cloud API, Blip ou Sinch. No painel de provedores, escolha o provider e preencha as credenciais exigidas. Em seguida, defina o flow ou agente que receberá as mensagens.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Meta Cloud API</strong>
+                <p>Configure verify token, WhatsApp Business Account ID, Phone Number ID, access token e versão da Graph API.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Blip</strong>
+                <p>Configure Contract ID e Authorization Key quando a entrega das mensagens sair pela infraestrutura Blip.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Sinch</strong>
+                <p>Use Conversation API com project/app/token ou modo relay com service number, username e token.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="whatsapp-webhooks">
+            <h2>Webhooks do WhatsApp</h2>
+            <p>Para Meta, configure no painel da Meta o callback público do Canvas Flow e o mesmo verify token salvo no provedor. Use webhook por flow quando quiser apontar direto para um fluxo, ou webhook principal por agente quando o agente deve decidir a rota.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#whatsapp-urls">Copiar</button>
+              <pre><code id="whatsapp-urls">GET  https://seu-host/api/canvas-flow/webhook/whatsapp/&lt;FLOW_ID&gt;
+POST https://seu-host/api/canvas-flow/webhook/whatsapp/&lt;FLOW_ID&gt;
+
+GET  https://seu-host/api/canvas-flow/webhook/whatsapp-main/&lt;AGENT_ID&gt;
+POST https://seu-host/api/canvas-flow/webhook/whatsapp-main/&lt;AGENT_ID&gt;</code></pre>
+            </div>
+            <div class="steps">
+              <article class="step">
+                <div>
+                  <h3>Defina o provider</h3>
+                  <p>Salve credenciais em Provedores. O Canvas Flow usa essas credenciais para validar o callback e enviar respostas.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Publique um flow WhatsApp</h3>
+                  <p>Use mensagens ricas, botões, listas, anexos e WhatsApp Flow quando o canal exigir interação estruturada.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div>
+                  <h3>Teste uma conversa real</h3>
+                  <p>O `conversationId` vem do contato/canal. Reutilize o mesmo ID para manter memória e estado do fluxo.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="widget">
+            <h2>Web Widget</h2>
+            <p>O Web Widget é o canal para incorporar o agente em sites e produtos. Ele usa a API do Canvas Flow por trás, mas entrega uma interface pronta de chat com tema, posição, textos e abertura configuráveis.</p>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Tema</strong>
+                <p>Configure cor primária, cor de destaque, nome do assistente, subtítulo, avatar e textos de boas-vindas.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Posição</strong>
+                <p>Escolha esquerda ou direita e defina se o chat abre automaticamente quando o usuário entra na página.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Memória</strong>
+                <p>Use um `conversationId` estável por visitante/sessão para preservar contexto entre mensagens.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="embed">
+            <h2>Embed em site</h2>
+            <p>Copie o snippet gerado pelo painel do Web Widget. O modelo recomendado é deixar o browser falar com um backend/proxy seu; esse proxy injeta a API key no servidor e chama o Canvas Flow.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#widget-embed">Copiar</button>
+              <pre><code id="widget-embed">&lt;script&gt;
+const canvasFlowWidget = {
+  flowId: "&lt;FLOW_ID&gt;",
+  agentId: "default-agent",
+  channel: "webWidget",
+  theme: {
+    assistantName: "Assistente IA",
+    position: "right",
+    openByDefault: false
+  }
+};
+
+async function enviarMensagemCanvasFlow(texto) {
+  const conversationId =
+    localStorage.getItem("canvasFlowConversationId") ||
+    crypto.randomUUID();
+  localStorage.setItem("canvasFlowConversationId", conversationId);
+
+  return fetch("/seu-backend/canvas-flow-proxy", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      flowId: canvasFlowWidget.flowId,
+      agentId: canvasFlowWidget.agentId,
+      channel: canvasFlowWidget.channel,
+      conversationId,
+      text: texto,
+      slots: { webWidget: canvasFlowWidget.theme }
+    })
+  }).then((response) =&gt; response.json());
+}
+&lt;/script&gt;</code></pre>
+            </div>
+            <div class="callout">
+              <p>Evite colocar API key direto no HTML público. Gere uma key com escopo mínimo e mantenha-a no backend/proxy que conversa com `POST /api/canvas-flow/test`.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="providers.html">Provedores</a> · <a href="api.html">API</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

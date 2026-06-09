@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>API, Webhook e Cron | Canvas Flow</title>
+    <meta name="description" content="Como consumir a API do Canvas Flow, criar API keys, usar webhooks customizados e disparar crons.">
+    <link rel="alternate" hreflang="en" href="en/docs.html">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="index.html"><span class="brand-mark">CF</span><span>Canvas Flow</span></a>
+        <button class="menu-button" type="button" data-menu-button aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <nav class="site-nav" data-site-nav>
+          <a href="index.html">Home</a>
+          <a href="docs.html">Como usar</a>
+          <a href="agent-os.html">Agent OS</a>
+          <a href="mcp.html">MCP</a>
+          <a href="blog.html">Blog</a>
+          <a href="en/index.html" hreflang="en">EN</a>
+          <a href="https://github.com/igoruehara/canvas-flow">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="page-hero">
+        <div class="page-title">
+          <p class="eyebrow">Runtime</p>
+          <h1>API, Webhook e Cron</h1>
+          <p>Consuma agentes por HTTP, gere API keys, receba eventos externos por webhook e execute rotinas agendadas com o node Cron.</p>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <aside class="side-nav" aria-label="Navegação desta página">
+          <strong>Nesta página</strong>
+          <a href="#auth">Autenticação</a>
+          <a href="#run-api">Executar flow</a>
+          <a href="#webhook">Webhook</a>
+          <a href="#cron">Cron</a>
+        </aside>
+
+        <div class="content-main">
+          <section class="doc-section" id="auth">
+            <h2>Autenticação</h2>
+            <p>As rotas de execução aceitam `Authorization: Bearer &lt;token&gt;`, `x-api-key` ou `x-canvas-flow-token`. Para uso externo, gere uma API key no Canvas Flow em vez de expor o token master do servidor.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#create-key">Copiar</button>
+              <pre><code id="create-key">curl -X POST "http://localhost:3333/api/canvas-flow-api-keys" \
+  -H "Authorization: Bearer &lt;CANVAS_FLOW_API_TOKEN&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "site-widget",
+    "agentId": "default-agent"
+  }'</code></pre>
+            </div>
+            <div class="callout">
+              <p>A resposta de criação mostra o token uma única vez. Guarde em secret manager ou variável segura do ambiente que vai chamar a API.</p>
+            </div>
+          </section>
+
+          <section class="doc-section" id="run-api">
+            <h2>Consumir a API do Canvas Flow</h2>
+            <p>Use `POST /api/canvas-flow/test` para executar um flow salvo ou uma configuração inline. Para conversas, envie `conversationId`; para contexto inicial, envie `slots`; para execução assíncrona com fila habilitada, envie `async: true` ou `queue: true`.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#run-flow">Copiar</button>
+              <pre><code id="run-flow">curl -X POST "http://localhost:3333/api/canvas-flow/test" \
+  -H "Authorization: Bearer &lt;CF_API_KEY&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "default-agent",
+    "flowId": "&lt;FLOW_ID&gt;",
+    "text": "Olá, preciso de ajuda",
+    "conversationId": "cliente-123",
+    "channel": "webWidget",
+    "slots": {
+      "origem": "site"
+    }
+  }'</code></pre>
+            </div>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>`text`</strong>
+                <p>Mensagem atual do usuário. Também vira `context.input` e `context.slots.userInput` durante a execução.</p>
+              </article>
+              <article class="feature-card">
+                <strong>`conversationId`</strong>
+                <p>Chave de memória e continuidade. Reutilize para preservar estado, slots e flow ativo.</p>
+              </article>
+              <article class="feature-card">
+                <strong>`approvals`</strong>
+                <p>Objeto opcional para continuar fluxos pausados em nodes de aprovação humana.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="webhook">
+            <h2>Webhook customizado</h2>
+            <p>Adicione um componente Webhook em modo inbound. O Canvas Flow expõe `GET` e `POST` em `/api/canvas-flow/webhook/custom/:flowId/:webhookId`, valida o segredo configurado no node e injeta o evento em `context.slots.webhook`.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#custom-webhook">Copiar</button>
+              <pre><code id="custom-webhook">curl -X POST "https://seu-host/api/canvas-flow/webhook/custom/&lt;FLOW_ID&gt;/pedido-criado" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;WEBHOOK_SECRET&gt;" \
+  -d '{
+    "text": "Novo pedido recebido",
+    "conversationId": "pedido-9842",
+    "slots": {
+      "pedidoId": "9842",
+      "total": 199.9
+    }
+  }'</code></pre>
+            </div>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Inbound</strong>
+                <p>Recebe evento externo, cria o payload `webhook` nos slots e pode iniciar no node Webhook ou no início do flow.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Outbound</strong>
+                <p>Envia dados do contexto para outro endpoint quando o fluxo precisa notificar um sistema externo.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Listener</strong>
+                <p>Funciona como ponto de escuta dentro do fluxo quando a arquitetura pede fire-and-forget ou callback posterior.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="doc-section" id="cron">
+            <h2>Cron e rotinas agendadas</h2>
+            <p>Use o componente Cron para disparar fluxos por intervalo, diariamente, semanalmente ou mensalmente. O runtime pode varrer crons automaticamente quando `cronAutorun` estiver ativo, ou você pode chamar a rota de execução manualmente.</p>
+            <div class="code-block">
+              <button class="copy-button" type="button" data-copy="#run-cron">Copiar</button>
+              <pre><code id="run-cron">curl -X POST "http://localhost:3333/api/canvas-flow/cron/run-due" \
+  -H "Authorization: Bearer &lt;CANVAS_FLOW_API_TOKEN&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "default-agent",
+    "dryRun": false
+  }'</code></pre>
+            </div>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <strong>Modos</strong>
+                <p>Intervalo em minutos/horas, diário, semanal ou mensal, com timezone configurável.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Entrada</strong>
+                <p>`cronInputText` define a mensagem usada para iniciar a execução e `cronSlotsJson` injeta slots iniciais.</p>
+              </article>
+              <article class="feature-card">
+                <strong>Operação</strong>
+                <p>`CANVAS_FLOW_CRON_AUTORUN` e `CANVAS_FLOW_CRON_SCAN_MS` controlam a varredura automática no runtime.</p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>Canvas Flow</span>
+        <span><a href="channels.html">Canais</a> · <a href="components.html">Componentes</a></span>
+      </div>
+    </footer>
+  </body>
+</html>
