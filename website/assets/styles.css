@@ -539,6 +539,10 @@ pre code {
   display: grid;
   gap: 0.9rem;
   align-self: start;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.85rem;
@@ -707,6 +711,8 @@ pre code {
   .side-nav {
     position: static;
     order: -1;
+    max-height: none;
+    overflow: visible;
   }
 }
 
@@ -718,6 +724,8 @@ pre code {
   .side-nav {
     position: static;
     order: -1;
+    max-height: none;
+    overflow: visible;
   }
 }
 
