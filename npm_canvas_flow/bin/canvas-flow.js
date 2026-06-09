@@ -20,6 +20,56 @@ const INFRA_PROJECT_NAME = 'canvas-flow';
 const INFRA_BASE_SERVICES = ['mongo'];
 const INFRA_FULL_SERVICES = ['mongo', 'etcd', 'minio', 'milvus'];
 
+const STARTUP_BANNER = [
+  '   ______                            ________               ',
+  '  / ____/___ _____ _   ______ ______/ ____/ /___ _      __ ',
+  " / /   / __ '/ __ \\ | / / __ '/ ___/ /_  / / __ \\ | /| / / ",
+  '/ /___/ /_/ / / / / |/ / /_/ (__  ) __/ / / /_/ / |/ |/ /  ',
+  '\\____/\\__,_/_/ /_/|___/\\__,_/____/_/   /_/\\____/|__/|__/   ',
+].join('\n');
+
+function envFlagEnabled(name) {
+  return ['1', 'true', 'yes', 'sim', 'on'].includes(String(process.env[name] || '').trim().toLowerCase());
+}
+
+function shouldUseAnsiColor() {
+  if (process.env.NO_COLOR) return false;
+  return Boolean(process.stdout.isTTY || process.env.FORCE_COLOR);
+}
+
+function colorAnsi(text, code) {
+  return shouldUseAnsiColor() ? `\x1b[${code}m${text}\x1b[0m` : text;
+}
+
+function shouldPrintStartupBanner(flags = {}) {
+  if (flags.banner === false || envFlagEnabled('CANVAS_FLOW_NO_BANNER')) return false;
+  if (process.env.CI && !envFlagEnabled('CANVAS_FLOW_BANNER')) return false;
+  return Boolean(process.stdout.isTTY || envFlagEnabled('CANVAS_FLOW_BANNER'));
+}
+
+function boxLine(text, width = 74) {
+  const safeText = String(text || '').slice(0, width - 4);
+  return `| ${safeText.padEnd(width - 4, ' ')} |`;
+}
+
+function printStartupBanner(flags = {}) {
+  if (!shouldPrintStartupBanner(flags)) return;
+
+  const border = '+'.padEnd(75, '-') + '+';
+  const box = [
+    border,
+    boxLine('Canvas Flow standalone runtime'),
+    boxLine('Tip: use --with-docker for local Mongo, or --full for Mongo + Milvus.'),
+    boxLine('Docs: https://igoruehara.github.io/canvas-flow/'),
+    border,
+  ].join('\n');
+
+  console.log('');
+  console.log(colorAnsi(STARTUP_BANNER.trimEnd(), '95'));
+  console.log(colorAnsi(box, '36'));
+  console.log('');
+}
+
 function printHelp() {
   console.log(`
 Canvas Flow standalone
@@ -44,6 +94,7 @@ Options:
   --public-url <url>          Override server.publicUrl
   --open                      Open the browser after starting
   --no-open                   Do not open the browser
+  --no-banner                 Do not print the startup banner
   --with-docker               Start local Docker infrastructure before Canvas Flow
   --full                      Include Milvus, MinIO and etcd with Docker infrastructure
   --show                      Show config content with "init" or "config"
@@ -1266,6 +1317,7 @@ async function waitForMongo(config, flags, paths, progress) {
 }
 
 async function start(flags) {
+  printStartupBanner(flags);
   const progress = createStartupProgress();
   let startupStatus;
   try {
