@@ -303,7 +303,7 @@ pre code {
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1rem;
 }
 
@@ -630,6 +630,12 @@ pre code {
   .side-nav {
     position: static;
     order: -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
   }
 }
 
