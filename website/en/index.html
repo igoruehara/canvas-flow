@@ -46,20 +46,29 @@
             <a class="button ghost" href="#agent-os">Explore Agent OS</a>
           </div>
           <div class="command-strip" aria-label="Installation command">
-            <div class="command-list">
-              <div class="command-row">
-                <span>Without Docker</span>
-                <code>npx @igoruehara/canvas-flow@latest --open</code>
-              </div>
-              <div class="command-row">
-                <span>With local Docker</span>
-                <code>npx @igoruehara/canvas-flow@latest --with-docker --open</code>
-              </div>
-              <div class="command-row">
-                <span>Global</span>
-                <code>npm install -g @igoruehara/canvas-flow
-canvas-flow --open</code>
-              </div>
+            <div class="install-options">
+              <article class="install-option">
+                <div class="install-option-header">
+                  <strong>Without Docker</strong>
+                  <button class="copy-button" type="button" data-copy="#en-hero-no-docker">Copy</button>
+                </div>
+                <pre><code id="en-hero-no-docker">npx @igoruehara/canvas-flow@latest --open</code></pre>
+              </article>
+              <article class="install-option">
+                <div class="install-option-header">
+                  <strong>With local Docker</strong>
+                  <button class="copy-button" type="button" data-copy="#en-hero-docker">Copy</button>
+                </div>
+                <pre><code id="en-hero-docker">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+              </article>
+              <article class="install-option">
+                <div class="install-option-header">
+                  <strong>Global</strong>
+                  <button class="copy-button" type="button" data-copy="#en-hero-global">Copy</button>
+                </div>
+                <pre><code id="en-hero-global">npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
+              </article>
             </div>
           </div>
         </div>
@@ -73,21 +82,29 @@ canvas-flow --open</code>
               <p>The standalone npm package serves the static frontend and the NestJS API from the same Node process. Docker remains optional when you want MongoDB and Milvus locally for a full RAG sandbox.</p>
             </div>
             <div class="code-block">
-              <button class="copy-button" type="button" data-copy="#en-quickstart-command">Copy</button>
-              <div class="command-list" id="en-quickstart-command">
-                <div class="command-row">
-                  <span>Without Docker</span>
-                  <code>npx @igoruehara/canvas-flow@latest --open</code>
-                </div>
-                <div class="command-row">
-                  <span>With local Docker</span>
-                  <code>npx @igoruehara/canvas-flow@latest --with-docker --open</code>
-                </div>
-                <div class="command-row">
-                  <span>Global</span>
-                  <code>npm install -g @igoruehara/canvas-flow
-canvas-flow --open</code>
-                </div>
+              <div class="install-options">
+                <article class="install-option">
+                  <div class="install-option-header">
+                    <strong>Without Docker</strong>
+                    <button class="copy-button" type="button" data-copy="#en-start-no-docker">Copy</button>
+                  </div>
+                  <pre><code id="en-start-no-docker">npx @igoruehara/canvas-flow@latest --open</code></pre>
+                </article>
+                <article class="install-option">
+                  <div class="install-option-header">
+                    <strong>With local Docker</strong>
+                    <button class="copy-button" type="button" data-copy="#en-start-docker">Copy</button>
+                  </div>
+                  <pre><code id="en-start-docker">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+                </article>
+                <article class="install-option">
+                  <div class="install-option-header">
+                    <strong>Global</strong>
+                    <button class="copy-button" type="button" data-copy="#en-start-global">Copy</button>
+                  </div>
+                  <pre><code id="en-start-global">npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
+                </article>
               </div>
             </div>
           </div>

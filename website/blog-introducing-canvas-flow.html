@@ -53,20 +53,29 @@
 
           <h2>Por que standalone via npm</h2>
           <p>O pacote `@igoruehara/canvas-flow` entrega uma experiência parecida com ferramentas locais de automação: você roda um comando, o backend NestJS sobe, o frontend estático é servido e a configuração privada fica fora do pacote publicado.</p>
-          <div class="command-list">
-            <div class="command-row">
-              <span>Sem Docker</span>
-              <code>npx @igoruehara/canvas-flow@latest --open</code>
-            </div>
-            <div class="command-row">
-              <span>Com Docker local</span>
-              <code>npx @igoruehara/canvas-flow@latest --with-docker --open</code>
-            </div>
-            <div class="command-row">
-              <span>Global</span>
-              <code>npm install -g @igoruehara/canvas-flow
-canvas-flow --open</code>
-            </div>
+          <div class="install-options">
+            <article class="install-option">
+              <div class="install-option-header">
+                <strong>Sem Docker</strong>
+                <button class="copy-button" type="button" data-copy="#intro-no-docker">Copiar</button>
+              </div>
+              <pre><code id="intro-no-docker">npx @igoruehara/canvas-flow@latest --open</code></pre>
+            </article>
+            <article class="install-option">
+              <div class="install-option-header">
+                <strong>Com Docker local</strong>
+                <button class="copy-button" type="button" data-copy="#intro-docker">Copiar</button>
+              </div>
+              <pre><code id="intro-docker">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+            </article>
+            <article class="install-option">
+              <div class="install-option-header">
+                <strong>Global</strong>
+                <button class="copy-button" type="button" data-copy="#intro-global">Copiar</button>
+              </div>
+              <pre><code id="intro-global">npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
+            </article>
           </div>
 
           <h2>Agent OS e MCP</h2>

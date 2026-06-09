@@ -48,21 +48,29 @@
             <h2>Instalação standalone</h2>
             <p>O jeito mais direto é rodar o pacote npm. Ele cria a configuração local em `~/.canvas-flow/config.json` e sobe a API junto com o frontend.</p>
             <div class="code-block">
-              <button class="copy-button" type="button" data-copy="#install-command">Copiar</button>
-              <div class="command-list" id="install-command">
-                <div class="command-row">
-                  <span>Sem Docker</span>
-                  <code>npx @igoruehara/canvas-flow@latest --open</code>
-                </div>
-                <div class="command-row">
-                  <span>Com Docker local</span>
-                  <code>npx @igoruehara/canvas-flow@latest --with-docker --open</code>
-                </div>
-                <div class="command-row">
-                  <span>Global</span>
-                  <code>npm install -g @igoruehara/canvas-flow
-canvas-flow --open</code>
-                </div>
+              <div class="install-options">
+                <article class="install-option">
+                  <div class="install-option-header">
+                    <strong>Sem Docker</strong>
+                    <button class="copy-button" type="button" data-copy="#install-no-docker">Copiar</button>
+                  </div>
+                  <pre><code id="install-no-docker">npx @igoruehara/canvas-flow@latest --open</code></pre>
+                </article>
+                <article class="install-option">
+                  <div class="install-option-header">
+                    <strong>Com Docker local</strong>
+                    <button class="copy-button" type="button" data-copy="#install-docker">Copiar</button>
+                  </div>
+                  <pre><code id="install-docker">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+                </article>
+                <article class="install-option">
+                  <div class="install-option-header">
+                    <strong>Global</strong>
+                    <button class="copy-button" type="button" data-copy="#install-global">Copiar</button>
+                  </div>
+                  <pre><code id="install-global">npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
+                </article>
               </div>
             </div>
             <p>Use sem Docker quando já tiver Mongo configurado, com Docker para subir infraestrutura local, ou global quando quiser manter o comando `canvas-flow` instalado.</p>

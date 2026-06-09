@@ -257,39 +257,56 @@ pre code {
   background: transparent;
 }
 
-.command-list {
+.install-options {
   display: grid;
-  gap: 0.85rem;
-  overflow-x: auto;
-  border: 1px solid #1e293b;
-  border-radius: 8px;
-  padding: 1rem;
-  background: #0b1220;
-  color: #dbeafe;
+  gap: 0.8rem;
 }
 
-.command-strip .command-list {
+.command-strip .install-options {
+  padding: 0.9rem;
+}
+
+.install-option {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid #24395a;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #0b1220;
+}
+
+.command-strip .install-option {
+  border-color: rgba(191, 219, 254, 0.32);
+  background: rgba(2, 6, 23, 0.36);
+}
+
+.install-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.install-option-header strong {
+  color: #bfdbfe;
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.install-option-header .copy-button {
+  min-height: 30px;
+  padding: 0.32rem 0.58rem;
+  background: #f8fafc;
+}
+
+.install-option pre {
   border: 0;
+  padding: 0;
   background: transparent;
 }
 
-.command-row {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 0.8rem;
-  align-items: start;
-}
-
-.command-row span {
-  padding-top: 0.12rem;
-  color: #bfdbfe;
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.command-row code {
+.install-option code {
   display: block;
   overflow-x: auto;
   border: 0;
@@ -678,11 +695,6 @@ pre code {
 @media (max-width: 700px) {
   .feature-grid {
     grid-template-columns: 1fr;
-  }
-
-  .command-row {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
   }
 }
 
