@@ -498,7 +498,7 @@ pre code {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 0.72fr) minmax(280px, 0.28fr);
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   gap: 2rem;
   padding: 3rem 0 4.5rem;
 }
