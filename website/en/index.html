@@ -46,7 +46,10 @@
             <a class="button ghost" href="#agent-os">Explore Agent OS</a>
           </div>
           <div class="command-strip" aria-label="Installation command">
-            <pre><code>npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+            <pre><code>npx @igoruehara/canvas-flow@latest --open
+
+npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
           </div>
         </div>
       </section>
@@ -56,11 +59,14 @@
           <div>
             <div class="section-heading">
               <h2>Run it locally in minutes</h2>
-              <p>The standalone npm package serves the static frontend and the NestJS API from the same Node process. Docker can start MongoDB and Milvus locally when you want a full RAG sandbox.</p>
+              <p>The standalone npm package serves the static frontend and the NestJS API from the same Node process. Docker remains optional when you want MongoDB and Milvus locally for a full RAG sandbox.</p>
             </div>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="#en-quickstart-command">Copy</button>
-              <pre><code id="en-quickstart-command">npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+              <pre><code id="en-quickstart-command">npx @igoruehara/canvas-flow@latest --open
+
+npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
             </div>
           </div>
           <figure class="screenshot-frame">

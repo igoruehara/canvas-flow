@@ -122,14 +122,17 @@ global que sobe backend e frontend juntos.
 Experiência de usuário final quando publicado no npm:
 
 ```bash
-npx @igoruehara/canvas-flow@latest --with-docker --open
-```
-
-Se o usuário já tiver MongoDB local rodando:
-
-```bash
 npx @igoruehara/canvas-flow@latest --open
 ```
+
+Ou instale globalmente:
+
+```bash
+npm install -g @igoruehara/canvas-flow
+canvas-flow --open
+```
+
+Docker continua opcional para subir Mongo/Milvus localmente.
 
 Desenvolvimento/publicação local do pacote:
 
@@ -153,8 +156,8 @@ canvas-flow infra up
 # Sobe Mongo + Milvus/MinIO/etcd para RAG local
 canvas-flow infra up --full
 
-# Sobe a infra Docker antes de iniciar e abre o navegador
-canvas-flow --with-docker --open
+# Abre o navegador usando a config atual
+canvas-flow --open
 
 # Mostra onde está o config.json ativo
 canvas-flow config

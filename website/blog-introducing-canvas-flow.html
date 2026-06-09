@@ -53,7 +53,10 @@
 
           <h2>Por que standalone via npm</h2>
           <p>O pacote `@igoruehara/canvas-flow` entrega uma experiência parecida com ferramentas locais de automação: você roda um comando, o backend NestJS sobe, o frontend estático é servido e a configuração privada fica fora do pacote publicado.</p>
-          <pre><code>npx @igoruehara/canvas-flow@latest --with-docker --open</code></pre>
+          <pre><code>npx @igoruehara/canvas-flow@latest --open
+
+npm install -g @igoruehara/canvas-flow
+canvas-flow --open</code></pre>
 
           <h2>Agent OS e MCP</h2>
           <p>Para fluxos mais sofisticados, o Canvas Flow usa Agent OS: `agents.md`, guardrails, rules, skills, subagents e manifesto de capacidades. O agente orquestrador delega para especialistas internos, enquanto MCP conecta ferramentas externas e também permite expor flows como tools.</p>
