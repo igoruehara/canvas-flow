@@ -498,9 +498,10 @@ pre code {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.4rem;
+  grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+  gap: 2.25rem;
   padding: 3rem 0 4.5rem;
+  align-items: start;
 }
 
 .content-main {
@@ -533,34 +534,61 @@ pre code {
 }
 
 .side-nav {
-  position: static;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  position: sticky;
+  top: 86px;
+  display: grid;
+  gap: 0.9rem;
   align-self: start;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 0.75rem;
+  padding: 0.85rem;
   background: #fff;
 }
 
 .side-nav strong {
-  flex: 0 0 100%;
-  padding: 0 0 0.25rem;
+  padding: 0 0.15rem;
   font-size: 0.82rem;
   text-transform: uppercase;
 }
 
+.side-nav-group {
+  display: grid;
+  gap: 0.25rem;
+  border-top: 1px solid #edf2f7;
+  padding-top: 0.7rem;
+}
+
+.side-nav-group:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.side-nav-label {
+  padding: 0 0.15rem 0.25rem;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .side-nav a {
+  display: block;
   border-radius: 6px;
-  padding: 0.45rem 0.6rem;
+  padding: 0.45rem 0.55rem;
   color: #475569;
+  font-size: 0.94rem;
   text-decoration: none;
 }
 
 .side-nav a:hover {
   color: var(--blue);
   background: #eff6ff;
+}
+
+.side-nav a[aria-current="page"] {
+  color: var(--blue);
+  background: #eff6ff;
+  font-weight: 850;
 }
 
 .code-block {
