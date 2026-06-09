@@ -257,6 +257,48 @@ pre code {
   background: transparent;
 }
 
+.command-list {
+  display: grid;
+  gap: 0.85rem;
+  overflow-x: auto;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #0b1220;
+  color: #dbeafe;
+}
+
+.command-strip .command-list {
+  border: 0;
+  background: transparent;
+}
+
+.command-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.command-row span {
+  padding-top: 0.12rem;
+  color: #bfdbfe;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.command-row code {
+  display: block;
+  overflow-x: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #f8fafc;
+  white-space: pre;
+}
+
 .section {
   padding: 4.5rem 0;
 }
@@ -636,6 +678,11 @@ pre code {
 @media (max-width: 700px) {
   .feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .command-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
   }
 }
 
