@@ -122,17 +122,16 @@ global que sobe backend e frontend juntos.
 Experiência de usuário final quando publicado no npm:
 
 ```bash
+# Sem Docker
 npx @igoruehara/canvas-flow@latest --open
-```
 
-Ou instale globalmente:
+# Com Docker local
+npx @igoruehara/canvas-flow@latest --with-docker --open
 
-```bash
+# Global
 npm install -g @igoruehara/canvas-flow
 canvas-flow --open
 ```
-
-Docker continua opcional para subir Mongo/Milvus localmente.
 
 Desenvolvimento/publicação local do pacote:
 

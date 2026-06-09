@@ -49,12 +49,17 @@
             <p>O jeito mais direto é rodar o pacote npm. Ele cria a configuração local em `~/.canvas-flow/config.json` e sobe a API junto com o frontend.</p>
             <div class="code-block">
               <button class="copy-button" type="button" data-copy="#install-command">Copiar</button>
-              <pre><code id="install-command">npx @igoruehara/canvas-flow@latest --open</code></pre>
-            </div>
-            <p>Se preferir instalar globalmente:</p>
-            <pre><code>npm install -g @igoruehara/canvas-flow
+              <pre><code id="install-command"># Sem Docker
+npx @igoruehara/canvas-flow@latest --open
+
+# Com Docker local
+npx @igoruehara/canvas-flow@latest --with-docker --open
+
+# Global
+npm install -g @igoruehara/canvas-flow
 canvas-flow --open</code></pre>
-            <p>Docker continua opcional para subir Mongo e Milvus localmente.</p>
+            </div>
+            <p>Use sem Docker quando já tiver Mongo configurado, com Docker para subir infraestrutura local, ou global quando quiser manter o comando `canvas-flow` instalado.</p>
           </section>
 
           <section class="doc-section" id="first-agent">
