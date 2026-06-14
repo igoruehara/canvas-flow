@@ -5,6 +5,8 @@ export declare class AuthController {
     config(): Promise<{
         loginRequired: boolean;
         hasUsers: boolean;
+        apiToken: string;
+        apiTokenConfigured: boolean;
     }>;
     bootstrap(body: any): Promise<{
         token: string;

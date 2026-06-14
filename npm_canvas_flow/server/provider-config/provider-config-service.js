@@ -31,10 +31,17 @@ const SECRET_PATHS = new Set([
     'azureSearch.apiKey',
     'mongodb.connectionString',
     'whatsapp.accessToken',
+    'whatsapp.embeddedSignupAppSecret',
     'whatsapp.blipAuthorizationKey',
     'whatsapp.sinchAccessToken',
     'whatsapp.sinchServiceToken',
 ]);
+const SINERGY_WHATSAPP_COEXISTENCE_PRESET = {
+    embeddedSignupAppId: '617497366521622',
+    embeddedSignupConfigId: '1952866105586018',
+    embeddedSignupSessionInfoVersion: '3',
+    embeddedSignupVersion: 'v3',
+};
 let ProviderConfigService = class ProviderConfigService {
     constructor(model, configService) {
         this.model = model;
@@ -174,6 +181,7 @@ let ProviderConfigService = class ProviderConfigService {
             whatsapp: {
                 provider: this.configService.get('WHATSAPP_PROVIDER') || 'meta',
                 deliveryMode: this.configService.get('WHATSAPP_DELIVERY_MODE') || 'provider',
+                onboardingMode: this.configService.get('WHATSAPP_ONBOARDING_MODE') || 'manual',
                 autoReply: this.configService.get('WHATSAPP_AUTO_REPLY') === undefined
                     ? true
                     : this.envFlag(this.configService.get('WHATSAPP_AUTO_REPLY')),
@@ -182,6 +190,18 @@ let ProviderConfigService = class ProviderConfigService {
                 phoneNumberId: this.configService.get('WHATSAPP_PHONE_NUMBER_ID') || '',
                 accessToken: this.configService.get('WHATSAPP_ACCESS_TOKEN') || '',
                 graphApiVersion: this.configService.get('WHATSAPP_GRAPH_API_VERSION') || 'v20.0',
+                coexistenceEnabled: this.envFlag(this.configService.get('WHATSAPP_COEXISTENCE_ENABLED')),
+                syncMessageEchoes: this.configService.get('WHATSAPP_SYNC_MESSAGE_ECHOES') === undefined
+                    ? true
+                    : this.envFlag(this.configService.get('WHATSAPP_SYNC_MESSAGE_ECHOES')),
+                syncHistory: this.envFlag(this.configService.get('WHATSAPP_SYNC_HISTORY')),
+                embeddedSignupAppId: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_APP_ID') || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupAppId,
+                embeddedSignupConfigId: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID') || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupConfigId,
+                embeddedSignupAppSecret: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_APP_SECRET') || '',
+                embeddedSignupSolutionId: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_SOLUTION_ID') || '',
+                embeddedSignupFeatureType: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_FEATURE_TYPE') || '',
+                embeddedSignupSessionInfoVersion: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_SESSION_INFO_VERSION') || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupSessionInfoVersion,
+                embeddedSignupVersion: this.configService.get('WHATSAPP_EMBEDDED_SIGNUP_VERSION') || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupVersion,
                 blipContractId: this.configService.get('BLIP_CONTRACT_ID') || '',
                 blipAuthorizationKey: this.configService.get('BLIP_AUTHORIZATION_KEY') || '',
                 sinchProjectId: this.configService.get('SINCH_PROJECT_ID') || '',
@@ -274,6 +294,9 @@ let ProviderConfigService = class ProviderConfigService {
         if (clean.whatsapp?.deliveryMode && !['provider', 'apiResponse'].includes(clean.whatsapp.deliveryMode)) {
             throw new common_1.BadRequestException('whatsapp.deliveryMode invalido.');
         }
+        if (clean.whatsapp?.onboardingMode && !['manual', 'embeddedSignup', 'coexistence'].includes(clean.whatsapp.onboardingMode)) {
+            throw new common_1.BadRequestException('whatsapp.onboardingMode invalido.');
+        }
         if (clean.whatsapp?.sinchApiMode && !['conversation', 'relay'].includes(clean.whatsapp.sinchApiMode)) {
             throw new common_1.BadRequestException('whatsapp.sinchApiMode invalido.');
         }
@@ -326,6 +349,23 @@ let ProviderConfigService = class ProviderConfigService {
     }
     hasBedrockConfig(settings) {
         return Boolean(String(settings.bedrock?.apiKey || '').trim() && String(settings.bedrock?.baseUrl || '').trim());
+    }
+    hasMeaningfulOverride(value) {
+        if (value === undefined || value === null || value === '')
+            return false;
+        if (Array.isArray(value))
+            return value.some((item) => this.hasMeaningfulOverride(item));
+        if (typeof value === 'object') {
+            return Object.values(value).some((item) => this.hasMeaningfulOverride(item));
+        }
+        return true;
+    }
+    hasSectionOverride(section, settings) {
+        if (!settings || typeof settings !== 'object')
+            return false;
+        if (!Object.prototype.hasOwnProperty.call(settings, section))
+            return false;
+        return this.hasMeaningfulOverride(settings[section]);
     }
     hasSectionConfig(section, settings) {
         if (!settings || typeof settings !== 'object')
@@ -385,24 +425,34 @@ let ProviderConfigService = class ProviderConfigService {
     buildProviderStatus(params) {
         const sections = ['openai', 'azureOpenai', 'gemini', 'claude', 'grok', 'bedrock', 'milvus', 'azureBlob', 'azureSearch', 'mongodb', 'webWidget', 'whatsapp'];
         const envSettings = params.envSettings || this.getEnvSettings();
+        const globalStored = params.globalStored || {};
+        const scopedStored = params.scopedStored || {};
+        const globalEffective = this.deepMergeFallback(envSettings, globalStored);
+        const scopedEffective = this.deepMergeFallback(globalEffective, scopedStored);
         const status = {};
         const scoped = String(params.agentId || '').trim();
         sections.forEach((section) => {
-            const agentConfigured = scoped ? this.hasSectionConfig(section, params.scopedStored) : false;
-            const globalConfigured = this.hasSectionConfig(section, params.globalStored);
+            const agentOverride = scoped ? this.hasSectionOverride(section, scopedStored) : false;
+            const globalOverride = this.hasSectionOverride(section, globalStored);
             const envConfigured = section === 'webWidget' ? this.hasEnvWebWidgetConfig() : this.hasSectionConfig(section, envSettings);
+            const effectiveSettings = scoped ? scopedEffective : globalEffective;
+            const configured = section === 'webWidget'
+                ? agentOverride || globalOverride || envConfigured
+                : this.hasSectionConfig(section, effectiveSettings);
             let source = 'none';
-            if (agentConfigured)
-                source = 'agent';
-            else if (globalConfigured)
-                source = 'global';
-            else if (envConfigured)
-                source = 'env';
+            if (configured) {
+                if (agentOverride)
+                    source = 'agent';
+                else if (globalOverride)
+                    source = 'global';
+                else if (envConfigured)
+                    source = 'env';
+            }
             status[section] = {
-                configured: source !== 'none',
+                configured,
                 source,
-                scopeConfigured: scoped ? agentConfigured : globalConfigured,
-                inherited: scoped ? !agentConfigured && source !== 'none' : source === 'env',
+                scopeConfigured: scoped ? agentOverride : globalOverride,
+                inherited: scoped ? !agentOverride && source !== 'none' : !globalOverride && source === 'env',
             };
         });
         return status;
@@ -456,6 +506,16 @@ let ProviderConfigService = class ProviderConfigService {
             else if (bedrockConfigured)
                 next.llmProvider = 'bedrock';
         }
+        const whatsapp = next.whatsapp || {};
+        const onboardingMode = String(whatsapp.onboardingMode || 'manual');
+        whatsapp.onboardingMode = ['manual', 'embeddedSignup', 'coexistence'].includes(onboardingMode)
+            ? onboardingMode
+            : 'manual';
+        whatsapp.coexistenceEnabled = whatsapp.onboardingMode === 'coexistence' || whatsapp.coexistenceEnabled === true;
+        whatsapp.syncMessageEchoes = whatsapp.syncMessageEchoes !== false;
+        whatsapp.syncHistory = whatsapp.syncHistory === true;
+        whatsapp.embeddedSignupSessionInfoVersion = String(whatsapp.embeddedSignupSessionInfoVersion || '3');
+        next.whatsapp = whatsapp;
         return next;
     }
     blankSection(section) {
@@ -537,12 +597,23 @@ let ProviderConfigService = class ProviderConfigService {
             whatsapp: {
                 provider: 'meta',
                 deliveryMode: 'provider',
+                onboardingMode: 'manual',
                 autoReply: true,
                 verifyToken: '',
                 businessAccountId: '',
                 phoneNumberId: '',
                 accessToken: '',
                 graphApiVersion: defaults.whatsapp.graphApiVersion || 'v20.0',
+                coexistenceEnabled: false,
+                syncMessageEchoes: true,
+                syncHistory: false,
+                embeddedSignupAppId: defaults.whatsapp.embeddedSignupAppId || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupAppId,
+                embeddedSignupConfigId: defaults.whatsapp.embeddedSignupConfigId || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupConfigId,
+                embeddedSignupAppSecret: '',
+                embeddedSignupSolutionId: defaults.whatsapp.embeddedSignupSolutionId || '',
+                embeddedSignupFeatureType: defaults.whatsapp.embeddedSignupFeatureType || '',
+                embeddedSignupSessionInfoVersion: defaults.whatsapp.embeddedSignupSessionInfoVersion || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupSessionInfoVersion,
+                embeddedSignupVersion: defaults.whatsapp.embeddedSignupVersion || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupVersion,
                 blipContractId: '',
                 blipAuthorizationKey: '',
                 sinchProjectId: '',
@@ -599,6 +670,175 @@ let ProviderConfigService = class ProviderConfigService {
                 scopedStored = await this.getStoredSettings(key);
         }
         return this.maskSafe(await this.getEffectiveSettings(agentId), this.buildProviderStatus({ agentId, globalStored, scopedStored, envSettings: this.getEnvSettings() }));
+    }
+    normalizeWhatsappGraphApiVersion(value) {
+        const raw = String(value || 'v20.0').trim() || 'v20.0';
+        return raw.startsWith('v') ? raw : `v${raw}`;
+    }
+    async parseGraphResponse(response) {
+        const body = await response.json().catch(() => ({}));
+        if (response.ok)
+            return body;
+        const message = body?.error?.message || body?.message || `Meta Graph API HTTP ${response.status}`;
+        const error = new common_1.BadRequestException(message);
+        error.graphBody = body;
+        error.graphStatus = response.status;
+        throw error;
+    }
+    async exchangeWhatsappEmbeddedSignupCode(params) {
+        const buildUrl = (includeRedirectUri) => {
+            const url = new URL(`https://graph.facebook.com/${params.graphApiVersion}/oauth/access_token`);
+            url.searchParams.set('client_id', params.appId);
+            url.searchParams.set('client_secret', params.appSecret);
+            url.searchParams.set('code', params.code);
+            if (includeRedirectUri && params.redirectUri)
+                url.searchParams.set('redirect_uri', params.redirectUri);
+            return url;
+        };
+        try {
+            const response = await fetch(buildUrl(Boolean(params.redirectUri)).toString());
+            return await this.parseGraphResponse(response);
+        }
+        catch (error) {
+            if (!params.redirectUri)
+                throw error;
+            const response = await fetch(buildUrl(false).toString());
+            return await this.parseGraphResponse(response);
+        }
+    }
+    async getWhatsappPhoneNumber(phoneNumberId, accessToken, graphApiVersion) {
+        if (!phoneNumberId || !accessToken)
+            return null;
+        const url = new URL(`https://graph.facebook.com/${graphApiVersion}/${encodeURIComponent(phoneNumberId)}`);
+        url.searchParams.set('fields', 'id,display_phone_number,verified_name,whatsapp_business_account');
+        const response = await fetch(url.toString(), {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        return await this.parseGraphResponse(response).catch(() => null);
+    }
+    async findWhatsappPhoneNumber(wabaId, accessToken, graphApiVersion) {
+        if (!wabaId || !accessToken)
+            return null;
+        const url = new URL(`https://graph.facebook.com/${graphApiVersion}/${encodeURIComponent(wabaId)}/phone_numbers`);
+        url.searchParams.set('fields', 'id,display_phone_number,verified_name');
+        const response = await fetch(url.toString(), {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const body = await this.parseGraphResponse(response).catch(() => null);
+        return Array.isArray(body?.data) ? body.data[0] || null : null;
+    }
+    async subscribeWhatsappWaba(wabaId, accessToken, graphApiVersion) {
+        if (!wabaId || !accessToken)
+            return { skipped: true, reason: 'missing_waba_or_token' };
+        const response = await fetch(`https://graph.facebook.com/${graphApiVersion}/${encodeURIComponent(wabaId)}/subscribed_apps`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            return {
+                ok: false,
+                status: response.status,
+                error: body?.error?.message || body?.message || `Meta Graph API HTTP ${response.status}`,
+                body,
+            };
+        }
+        return { ok: true, status: response.status, body };
+    }
+    async completeWhatsappEmbeddedSignup(body, updatedBy, agentId) {
+        if (this.model.db.readyState !== 1) {
+            throw new common_1.BadRequestException('MongoDB ainda nao esta conectado para salvar configuracoes.');
+        }
+        const effective = await this.getEffectiveSettings(agentId);
+        const whatsapp = effective.whatsapp || this.getEnvSettings().whatsapp;
+        const graphApiVersion = this.normalizeWhatsappGraphApiVersion(body?.graphApiVersion || whatsapp.graphApiVersion);
+        const appId = String(body?.appId || whatsapp.embeddedSignupAppId || '').trim();
+        const appSecret = String(body?.appSecret || whatsapp.embeddedSignupAppSecret || '').trim();
+        const code = String(body?.code || '').trim();
+        let accessToken = String(whatsapp.accessToken || '').trim();
+        let tokenExchange = { skipped: true, reason: 'missing_code_or_app_secret' };
+        if (code && appId && appSecret) {
+            const tokenResult = await this.exchangeWhatsappEmbeddedSignupCode({
+                appId,
+                appSecret,
+                code,
+                graphApiVersion,
+                redirectUri: String(body?.redirectUri || '').trim() || undefined,
+            });
+            accessToken = String(tokenResult?.access_token || accessToken || '').trim();
+            tokenExchange = {
+                ok: Boolean(accessToken),
+                tokenType: tokenResult?.token_type,
+                expiresIn: tokenResult?.expires_in,
+            };
+        }
+        let businessAccountId = String(body?.wabaId ||
+            body?.waba_id ||
+            body?.businessAccountId ||
+            whatsapp.businessAccountId ||
+            '').trim();
+        let phoneNumberId = String(body?.phoneNumberId ||
+            body?.phone_number_id ||
+            whatsapp.phoneNumberId ||
+            '').trim();
+        let phoneNumber = String(body?.phoneNumber || body?.displayPhoneNumber || '').trim();
+        if (phoneNumberId && accessToken) {
+            const phoneNumberInfo = await this.getWhatsappPhoneNumber(phoneNumberId, accessToken, graphApiVersion);
+            if (!phoneNumber)
+                phoneNumber = String(phoneNumberInfo?.display_phone_number || '').trim();
+            if (!businessAccountId) {
+                businessAccountId = String(phoneNumberInfo?.whatsapp_business_account?.id ||
+                    phoneNumberInfo?.whatsapp_business_account ||
+                    '').trim();
+            }
+        }
+        if (!phoneNumberId && businessAccountId && accessToken) {
+            const phoneNumberInfo = await this.findWhatsappPhoneNumber(businessAccountId, accessToken, graphApiVersion);
+            phoneNumberId = String(phoneNumberInfo?.id || '').trim();
+            phoneNumber = phoneNumber || String(phoneNumberInfo?.display_phone_number || '').trim();
+        }
+        if (!businessAccountId && !phoneNumberId) {
+            throw new common_1.BadRequestException('Embedded Signup nao retornou WABA ID nem Phone Number ID.');
+        }
+        const coexistenceEnabled = body?.coexistenceEnabled === true || whatsapp.coexistenceEnabled === true || whatsapp.onboardingMode === 'coexistence';
+        const subscribe = body?.subscribeWebhooks === false
+            ? { skipped: true, reason: 'disabled' }
+            : await this.subscribeWhatsappWaba(businessAccountId, accessToken, graphApiVersion);
+        const settingsPatch = {
+            whatsapp: {
+                provider: 'meta',
+                deliveryMode: whatsapp.deliveryMode || 'provider',
+                onboardingMode: coexistenceEnabled ? 'coexistence' : 'embeddedSignup',
+                coexistenceEnabled,
+                syncMessageEchoes: coexistenceEnabled ? true : whatsapp.syncMessageEchoes !== false,
+                syncHistory: whatsapp.syncHistory === true,
+                businessAccountId,
+                phoneNumberId,
+                accessToken,
+                graphApiVersion,
+                embeddedSignupAppId: appId || whatsapp.embeddedSignupAppId || '',
+                embeddedSignupConfigId: String(body?.configId || body?.configurationId || whatsapp.embeddedSignupConfigId || '').trim(),
+                embeddedSignupSolutionId: String(body?.solutionId || whatsapp.embeddedSignupSolutionId || '').trim(),
+                embeddedSignupFeatureType: String(body?.featureType || whatsapp.embeddedSignupFeatureType || '').trim(),
+                embeddedSignupSessionInfoVersion: String(body?.sessionInfoVersion || whatsapp.embeddedSignupSessionInfoVersion || '3').trim(),
+                embeddedSignupVersion: String(body?.embeddedSignupVersion || whatsapp.embeddedSignupVersion || '').trim(),
+            },
+        };
+        if (appSecret)
+            settingsPatch.whatsapp.embeddedSignupAppSecret = appSecret;
+        const safe = await this.updateSettings(settingsPatch, updatedBy, agentId);
+        return {
+            ...safe,
+            onboarding: {
+                ok: true,
+                coexistenceEnabled,
+                businessAccountId,
+                phoneNumberId,
+                phoneNumber,
+                tokenExchange,
+                subscribe,
+            },
+        };
     }
     async updateSettings(patch, updatedBy, agentId) {
         if (this.model.db.readyState !== 1) {

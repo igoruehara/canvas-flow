@@ -104,12 +104,23 @@ export interface ProviderSettings {
     whatsapp: {
         provider: 'meta' | 'blip' | 'sinch';
         deliveryMode: 'provider' | 'apiResponse';
+        onboardingMode: 'manual' | 'embeddedSignup' | 'coexistence';
         autoReply: boolean;
         verifyToken: string;
         businessAccountId: string;
         phoneNumberId: string;
         accessToken: string;
         graphApiVersion: string;
+        coexistenceEnabled: boolean;
+        syncMessageEchoes: boolean;
+        syncHistory: boolean;
+        embeddedSignupAppId: string;
+        embeddedSignupConfigId: string;
+        embeddedSignupAppSecret: string;
+        embeddedSignupSolutionId: string;
+        embeddedSignupFeatureType: string;
+        embeddedSignupSessionInfoVersion: string;
+        embeddedSignupVersion: string;
         blipContractId: string;
         blipAuthorizationKey: string;
         sinchProjectId: string;
@@ -152,6 +163,8 @@ export declare class ProviderConfigService {
     private hasClaudeConfig;
     private hasGrokConfig;
     private hasBedrockConfig;
+    private hasMeaningfulOverride;
+    private hasSectionOverride;
     private hasSectionConfig;
     private buildProviderStatus;
     private hasEnvWebWidgetConfig;
@@ -160,6 +173,47 @@ export declare class ProviderConfigService {
     private getStoredSettings;
     getEffectiveSettings(agentId?: string): Promise<ProviderSettings>;
     getSafeSettings(agentId?: string): Promise<{
+        providerStatus?: Record<ProviderConfigSection, any>;
+        settings: any;
+        secretStatus: Record<string, boolean>;
+    }>;
+    private normalizeWhatsappGraphApiVersion;
+    private parseGraphResponse;
+    private exchangeWhatsappEmbeddedSignupCode;
+    private getWhatsappPhoneNumber;
+    private findWhatsappPhoneNumber;
+    private subscribeWhatsappWaba;
+    completeWhatsappEmbeddedSignup(body: any, updatedBy?: string, agentId?: string): Promise<{
+        onboarding: {
+            ok: boolean;
+            coexistenceEnabled: boolean;
+            businessAccountId: string;
+            phoneNumberId: string;
+            phoneNumber: string;
+            tokenExchange: any;
+            subscribe: {
+                skipped: boolean;
+                reason: string;
+                ok?: undefined;
+                status?: undefined;
+                error?: undefined;
+                body?: undefined;
+            } | {
+                ok: boolean;
+                status: number;
+                error: any;
+                body: any;
+                skipped?: undefined;
+                reason?: undefined;
+            } | {
+                ok: boolean;
+                status: number;
+                body: any;
+                skipped?: undefined;
+                reason?: undefined;
+                error?: undefined;
+            };
+        };
         providerStatus?: Record<ProviderConfigSection, any>;
         settings: any;
         secretStatus: Record<string, boolean>;

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Headers, Param, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth-service';
 import { ProviderConfigService } from './provider-config-service';
@@ -36,6 +36,18 @@ export class ProviderConfigController {
   ) {
     const user = await this.assertAuth(authorization, headerToken, xApiKey);
     return await this.service.updateSettings(body?.settings || body || {}, user?.id, body?.agentId || agentId);
+  }
+
+  @Post('whatsapp/embedded-signup')
+  async completeWhatsappEmbeddedSignup(
+    @Body() body: any,
+    @Query('agentId') agentId?: string,
+    @Headers('authorization') authorization?: string,
+    @Headers('x-canvas-flow-token') headerToken?: string,
+    @Headers('x-api-key') xApiKey?: string,
+  ) {
+    const user = await this.assertAuth(authorization, headerToken, xApiKey);
+    return await this.service.completeWhatsappEmbeddedSignup(body || {}, user?.id, body?.agentId || agentId);
   }
 
   @Delete(':section')

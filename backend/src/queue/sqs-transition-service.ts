@@ -57,6 +57,9 @@ export class SqsTransitionService {
       body?.resource?.from ||
       body?.from ||
       body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from ||
+      body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.to ||
+      body?.entry?.[0]?.changes?.[0]?.value?.message_echoes?.[0]?.to ||
+      body?.entry?.[0]?.changes?.[0]?.value?.smb_message_echoes?.[0]?.to ||
       body?.message_inbound?.channel_identity?.identity ||
       body?.messageInbound?.channel_identity?.identity ||
       body?.event?.message_inbound?.channel_identity?.identity ||
@@ -73,6 +76,9 @@ export class SqsTransitionService {
       payload?.conversationId ||
       payload?.body?.conversationId ||
       payload?.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from ||
+      payload?.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.to ||
+      payload?.body?.entry?.[0]?.changes?.[0]?.value?.message_echoes?.[0]?.to ||
+      payload?.body?.entry?.[0]?.changes?.[0]?.value?.smb_message_echoes?.[0]?.to ||
       payload?.flowId ||
       payload?.agentId ||
       type ||

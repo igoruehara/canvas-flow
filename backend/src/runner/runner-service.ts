@@ -4,7 +4,7 @@ import { CanvasFlowService } from '../canvas-flow/canvas-flow-service';
 import { HttpBatchService } from '../http-batch/http-batch-service';
 import { MemoryService } from '../memory/memory-service';
 import { RagService } from '../rag/rag-service';
-import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { SignatureV4 } from '@smithy/signature-v4';
@@ -431,12 +431,23 @@ interface FlowConfig {
   whatsapp?: {
     provider?: 'meta' | 'blip' | 'sinch';
     deliveryMode?: 'provider' | 'apiResponse';
+    onboardingMode?: 'manual' | 'embeddedSignup' | 'coexistence';
     verifyToken?: string;
     businessAccountId?: string;
     phoneNumberId?: string;
     accessToken?: string;
     graphApiVersion?: string;
     autoReply?: boolean;
+    coexistenceEnabled?: boolean;
+    syncMessageEchoes?: boolean;
+    syncHistory?: boolean;
+    embeddedSignupAppId?: string;
+    embeddedSignupConfigId?: string;
+    embeddedSignupAppSecret?: string;
+    embeddedSignupSolutionId?: string;
+    embeddedSignupFeatureType?: string;
+    embeddedSignupSessionInfoVersion?: string;
+    embeddedSignupVersion?: string;
     blipContractId?: string;
     blipAuthorizationKey?: string;
     sinchProjectId?: string;
@@ -740,11 +751,37 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     return '';
   }
 
+  private isRuntimeLlmProviderConfigured(settings: ProviderSettings, provider: string) {
+    if (provider === 'openai') return Boolean(String(settings.openai?.apiKey || '').trim());
+    if (provider === 'azure') {
+      return Boolean(
+        String(settings.azureOpenai?.endpoint || '').trim() &&
+        String(settings.azureOpenai?.apiKey || '').trim(),
+      );
+    }
+    if (provider === 'gemini') return Boolean(String(settings.gemini?.apiKey || '').trim());
+    if (provider === 'claude') return Boolean(String(settings.claude?.apiKey || '').trim());
+    if (provider === 'grok') return Boolean(String(settings.grok?.apiKey || '').trim());
+    if (provider === 'bedrock') {
+      return Boolean(
+        String(settings.bedrock?.apiKey || '').trim() &&
+        String(settings.bedrock?.baseUrl || '').trim(),
+      );
+    }
+    return false;
+  }
+
+  private resolveRuntimeLlmProvider(settings: ProviderSettings, provider?: string) {
+    const requested = this.normalizeFlowLlmProvider(provider);
+    if (requested && this.isRuntimeLlmProviderConfigured(settings, requested)) return requested;
+    return this.normalizeFlowLlmProvider(settings?.llmProvider || '') || requested || undefined;
+  }
+
   private async getOpenAIClientForProvider(provider?: string, agentId?: string) {
     const normalized = this.normalizeFlowLlmProvider(provider);
     if (!normalized && !agentId) return await this.getOpenAIClient();
     const settings = await this.getProviderSettings(agentId);
-    const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, normalized);
+    const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, this.resolveRuntimeLlmProvider(settings, normalized));
     return createOpenAIClient(this.configService, runtime);
   }
 
@@ -752,7 +789,7 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     const normalized = this.normalizeFlowLlmProvider(provider);
     if (!normalized && !agentId) return await this.getChatModel(model);
     const settings = await this.getProviderSettings(agentId);
-    const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, normalized);
+    const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, this.resolveRuntimeLlmProvider(settings, normalized));
     return getOpenAIChatModel(this.configService, model, runtime);
   }
 
@@ -11665,6 +11702,10 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
       'businessAccountId',
       'phoneNumberId',
       'accessToken',
+      'embeddedSignupAppId',
+      'embeddedSignupConfigId',
+      'embeddedSignupAppSecret',
+      'embeddedSignupSolutionId',
       'blipContractId',
       'blipAuthorizationKey',
       'sinchProjectId',
@@ -11677,6 +11718,8 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     if (textFields.some((field) => String(whatsapp[field] || '').trim())) return true;
     if (String(whatsapp.provider || 'meta') !== 'meta') return true;
     if (String(whatsapp.deliveryMode || 'provider') === 'apiResponse') return true;
+    if (String(whatsapp.onboardingMode || 'manual') !== 'manual') return true;
+    if (whatsapp.coexistenceEnabled === true || whatsapp.syncMessageEchoes === false || whatsapp.syncHistory === true) return true;
     if (whatsapp.autoReply === false) return true;
     if (String(whatsapp.sinchApiMode || 'conversation') === 'relay' || String(whatsapp.sinchApiMode || '') === 'broker') return true;
     if (String(whatsapp.graphApiVersion || '').trim() && String(whatsapp.graphApiVersion).trim() !== 'v20.0') return true;
@@ -13401,24 +13444,51 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     return this.isPlainObject(parsed) ? await this.enrichFlowReplyDataWithAttachmentUrls(parsed, config, flowId) : undefined;
   }
 
+  private extractMetaWhatsappMessageText(message: any, flowReplyData?: any) {
+    return (
+      message?.text?.body ||
+      message?.button?.payload ||
+      message?.button?.text ||
+      message?.interactive?.button_reply?.id ||
+      message?.interactive?.button_reply?.title ||
+      message?.interactive?.list_reply?.id ||
+      message?.interactive?.list_reply?.title ||
+      (flowReplyData ? JSON.stringify(flowReplyData) : '') ||
+      message?.interactive?.nfm_reply?.body ||
+      message?.image?.caption ||
+      message?.document?.caption ||
+      message?.audio?.id ||
+      message?.video?.caption ||
+      message?.contacts?.[0]?.name?.formatted_name ||
+      ''
+    );
+  }
+
+  private normalizeWhatsappPhone(value: any) {
+    return String(value || '').replace(/[^\d]/g, '');
+  }
+
+  private inferWhatsappHistoryRole(message: any, customerPhone: string, businessPhone?: string): 'user' | 'assistant' {
+    const from = this.normalizeWhatsappPhone(message?.from);
+    const to = this.normalizeWhatsappPhone(message?.to || message?.recipient_id);
+    const customer = this.normalizeWhatsappPhone(customerPhone);
+    const business = this.normalizeWhatsappPhone(businessPhone);
+    if (customer && from === customer) return 'user';
+    if (customer && to === customer) return 'assistant';
+    if (business && from === business) return 'assistant';
+    return message?.from_me === true || message?.fromMe === true ? 'assistant' : 'user';
+  }
+
   private async extractMetaWhatsappMessages(payload: any, config: FlowConfig, flowId?: string) {
     const messages: any[] = [];
     for (const entry of payload?.entry || []) {
       for (const change of entry?.changes || []) {
+        const field = String(change?.field || '');
+        if (['smb_message_echoes', 'history', 'smb_app_state_sync'].includes(field)) continue;
         const value = change?.value || {};
         for (const message of value?.messages || []) {
           const flowReplyData = await this.extractFlowReplyData(message, config, flowId);
-          const text =
-            message?.text?.body ||
-            message?.button?.payload ||
-            message?.button?.text ||
-            message?.interactive?.button_reply?.id ||
-            message?.interactive?.button_reply?.title ||
-            message?.interactive?.list_reply?.id ||
-            message?.interactive?.list_reply?.title ||
-            (flowReplyData ? JSON.stringify(flowReplyData) : '') ||
-            message?.interactive?.nfm_reply?.body ||
-            '';
+          const text = this.extractMetaWhatsappMessageText(message, flowReplyData);
           if (!text) continue;
           messages.push({
             provider: 'meta',
@@ -13485,6 +13555,232 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     if (provider === 'blip') return this.extractBlipWhatsappMessages(payload);
     if (provider === 'sinch') return this.extractSinchWhatsappMessages(payload);
     return await this.extractMetaWhatsappMessages(payload, config, flowId);
+  }
+
+  private pushMetaWhatsappSyncMessage(
+    events: any[],
+    params: {
+      message: any;
+      kind: 'message_echo' | 'history';
+      value?: any;
+      customerPhone?: string;
+      role?: 'user' | 'assistant';
+    },
+  ) {
+    const message = params.message || {};
+    const value = params.value || {};
+    const metadata = value?.metadata || {};
+    const text = this.extractMetaWhatsappMessageText(message);
+    if (!text) return;
+
+    const customerPhone = String(
+      params.customerPhone ||
+      message?.to ||
+      message?.recipient_id ||
+      message?.customer_phone_number ||
+      message?.customerPhoneNumber ||
+      message?.contacts?.[0]?.wa_id ||
+      message?.from ||
+      '',
+    ).trim();
+    const role = params.role || this.inferWhatsappHistoryRole(message, customerPhone, metadata?.display_phone_number);
+    const from = role === 'assistant'
+      ? customerPhone || String(message?.to || message?.recipient_id || message?.from || '').trim()
+      : String(message?.from || customerPhone || '').trim();
+    if (!from) return;
+
+    events.push({
+      provider: 'meta',
+      syncKind: params.kind,
+      role,
+      from,
+      text,
+      messageId: message?.id,
+      timestamp: message?.timestamp,
+      phoneNumberId: metadata?.phone_number_id,
+      displayPhoneNumber: metadata?.display_phone_number,
+      raw: message,
+    });
+  }
+
+  private getMetaWhatsappMessageArray(value: any) {
+    if (Array.isArray(value?.messages)) return value.messages;
+    if (Array.isArray(value?.message_echoes)) return value.message_echoes;
+    if (Array.isArray(value?.smb_message_echoes)) return value.smb_message_echoes;
+    if (Array.isArray(value?.data?.messages)) return value.data.messages;
+    if (this.isPlainObject(value?.message)) return [value.message];
+    return [];
+  }
+
+  private extractMetaWhatsappHistoryEvents(events: any[], historySource: any, value: any) {
+    const histories = Array.isArray(historySource) ? historySource : [historySource].filter(Boolean);
+    histories.forEach((history) => {
+      const threads = Array.isArray(history?.threads) ? history.threads : [];
+      threads.forEach((thread: any) => {
+        const customerPhone = String(thread?.id || thread?.wa_id || thread?.phone || '').trim();
+        const messages = Array.isArray(thread?.messages) ? thread.messages : [];
+        messages.forEach((message: any) => {
+          this.pushMetaWhatsappSyncMessage(events, {
+            message,
+            kind: 'history',
+            value,
+            customerPhone,
+          });
+        });
+      });
+    });
+  }
+
+  private extractMetaWhatsappSyncEvents(payload: any, config: FlowConfig) {
+    const whatsapp = config?.whatsapp || {};
+    const syncEchoes = whatsapp.syncMessageEchoes !== false;
+    const syncHistory = whatsapp.syncHistory === true;
+    const events: any[] = [];
+
+    if (syncEchoes && String(payload?.event || '') === 'smb_message_echoes') {
+      const data = payload?.data || {};
+      this.getMetaWhatsappMessageArray(data).forEach((message: any) => {
+        this.pushMetaWhatsappSyncMessage(events, {
+          message,
+          kind: 'message_echo',
+          value: data,
+          role: 'assistant',
+        });
+      });
+    }
+
+    if (syncHistory && String(payload?.event || '') === 'history') {
+      const data = payload?.data || {};
+      this.extractMetaWhatsappHistoryEvents(events, data?.history || data, data);
+    }
+
+    for (const entry of payload?.entry || []) {
+      for (const change of entry?.changes || []) {
+        const field = String(change?.field || '');
+        const value = change?.value || {};
+        if (field === 'smb_message_echoes' && syncEchoes) {
+          this.getMetaWhatsappMessageArray(value).forEach((message: any) => {
+            this.pushMetaWhatsappSyncMessage(events, {
+              message,
+              kind: 'message_echo',
+              value,
+              role: 'assistant',
+            });
+          });
+        }
+        if (field === 'history' && syncHistory) {
+          this.extractMetaWhatsappHistoryEvents(events, value?.history || value, value);
+        }
+      }
+    }
+
+    return events;
+  }
+
+  private async extractWhatsappSyncEvents(payload: any, config: FlowConfig) {
+    const provider = this.normalizeWhatsappProvider(config);
+    if (provider !== 'meta') return [];
+    return this.extractMetaWhatsappSyncEvents(payload, config);
+  }
+
+  private buildWhatsappSyncDedupeKey(flowRecord: any, event: any) {
+    const providerMessageId = String(event?.messageId || '').trim();
+    const fallback = providerMessageId || createHash('sha1')
+      .update(JSON.stringify({
+        kind: event?.syncKind,
+        role: event?.role,
+        from: event?.from,
+        text: event?.text,
+        timestamp: event?.timestamp,
+      }))
+      .digest('hex');
+    return [
+      flowRecord?.organizationId || 'global',
+      flowRecord?.agentId || 'default-agent',
+      flowRecord?._id || 'flow',
+      event?.provider || 'whatsapp',
+      event?.syncKind || 'sync',
+      fallback,
+    ].join(':');
+  }
+
+  private async persistWhatsappSyncEvents(flowRecord: any, flowId: string, events: any[]) {
+    const results: any[] = [];
+    for (const event of events) {
+      const conversationId = `whatsapp-${event.from}`;
+      const conversationOwnerId = `whatsapp:${event.from}`;
+      const dedupeKey = this.buildWhatsappSyncDedupeKey(flowRecord, event);
+      const dedupe = await this.sqsTransitionService.tryStartMessageDedupe({
+        dedupeKey,
+        organizationId: flowRecord?.organizationId,
+        agentId: flowRecord?.agentId,
+        flowId,
+        conversationId,
+        channel: 'whatsapp',
+        provider: event.provider || 'meta',
+        providerMessageId: event.messageId,
+      });
+      if (!dedupe.acquired) {
+        results.push({
+          from: event.from,
+          messageId: event.messageId,
+          syncKind: event.syncKind,
+          duplicate: true,
+          skipped: true,
+          status: dedupe.status,
+        });
+        continue;
+      }
+
+      try {
+        await this.memoryService.addTurn({
+          agentId: flowRecord?.agentId,
+          conversationId,
+          role: event.role === 'assistant' ? 'assistant' : 'user',
+          content: event.text,
+          metadata: {
+            kind: 'message',
+            source: 'whatsapp_coexistence',
+            syncKind: event.syncKind,
+            organizationId: flowRecord?.organizationId,
+            flowId,
+            entryFlowId: flowId,
+            activeFlowId: flowId,
+            conversationOwnerId,
+            whatsapp: {
+              provider: event.provider || 'meta',
+              from: event.from,
+              messageId: event.messageId,
+              phoneNumberId: event.phoneNumberId,
+              displayPhoneNumber: event.displayPhoneNumber,
+              timestamp: event.timestamp,
+              syncKind: event.syncKind,
+            },
+          },
+        });
+        await this.sqsTransitionService.completeMessageDedupe(dedupeKey);
+        results.push({
+          from: event.from,
+          messageId: event.messageId,
+          syncKind: event.syncKind,
+          role: event.role,
+          synced: true,
+        });
+      } catch (error: any) {
+        await this.sqsTransitionService.failMessageDedupe(dedupeKey, error);
+        logEvent('error', 'whatsapp.sync.failed', {
+          flowId,
+          agentId: flowRecord?.agentId,
+          conversationId,
+          provider: event.provider,
+          providerMessageId: event.messageId,
+          syncKind: event.syncKind,
+          error: getErrorDetails(error),
+        });
+        throw error;
+      }
+    }
+    return results;
   }
 
   private getAssistantText(messages: FlowMessage[]) {
@@ -15539,9 +15835,19 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     const versionInfo = await this.canvasFlowService.resolveFlowVersionAsync(flowRecord, payload?.flowVersion || payload?.version || releaseFlowVersion);
     const config: FlowConfig = await this.resolveRuntimeFlowConfig(versionInfo.config, flowRecord?.agentId, flowRecord?.organizationId);
     const messages = await this.extractWhatsappMessages(payload, config, String(flowRecord?._id || flowId));
+    const syncEvents = await this.extractWhatsappSyncEvents(payload, config);
+    const syncResults = syncEvents.length
+      ? await this.persistWhatsappSyncEvents(flowRecord, String(flowRecord?._id || flowId), syncEvents)
+      : [];
 
     if (!messages.length) {
-      return { ok: true, received: 0, ignored: true };
+      return {
+        ok: true,
+        received: 0,
+        synced: syncResults.length,
+        syncResults,
+        ignored: syncResults.length === 0,
+      };
     }
 
     const results: any[] = [];
@@ -15726,6 +16032,8 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     return {
       ok: true,
       received: messages.length,
+      synced: syncResults.length,
+      syncResults,
       results,
     };
   }

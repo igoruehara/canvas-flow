@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Bot, Check, Cloud, Copy, Database, Loader2, MessageCircle, Monitor, Save, Search, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { canvasApi } from '../lib/api';
 import { LLM_MODEL_OPTIONS_BY_PROVIDER } from '../lib/llmModels';
-import type { CanvasFlowProviderSettings } from '../types/flow';
+import type { CanvasFlowProviderSettings, ProviderConfigSection, ProviderConfigSectionStatus } from '../types/flow';
+
+const SINERGY_WHATSAPP_COEXISTENCE_PRESET = {
+  embeddedSignupAppId: '617497366521622',
+  embeddedSignupConfigId: '1952866105586018',
+  embeddedSignupSessionInfoVersion: '3',
+  embeddedSignupVersion: 'v3',
+} as const;
 
 const DEFAULT_SETTINGS: CanvasFlowProviderSettings = {
   llmProvider: 'openai',
@@ -82,12 +89,23 @@ const DEFAULT_SETTINGS: CanvasFlowProviderSettings = {
   whatsapp: {
     provider: 'meta',
     deliveryMode: 'provider',
+    onboardingMode: 'manual',
     verifyToken: '',
     businessAccountId: '',
     phoneNumberId: '',
     accessToken: '',
     graphApiVersion: 'v20.0',
     autoReply: true,
+    coexistenceEnabled: false,
+    syncMessageEchoes: true,
+    syncHistory: false,
+    embeddedSignupAppId: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupAppId,
+    embeddedSignupConfigId: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupConfigId,
+    embeddedSignupAppSecret: '',
+    embeddedSignupSolutionId: '',
+    embeddedSignupFeatureType: '',
+    embeddedSignupSessionInfoVersion: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupSessionInfoVersion,
+    embeddedSignupVersion: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupVersion,
     blipContractId: '',
     blipAuthorizationKey: '',
     sinchProjectId: '',
@@ -117,13 +135,8 @@ const EMBEDDING_MODEL_OPTIONS = [
 ];
 
 type SecretStatus = Record<string, boolean>;
-type ProviderObjectSection = Exclude<keyof CanvasFlowProviderSettings, 'llmProvider'>;
-type ProviderStatus = Record<string, {
-  configured: boolean;
-  source: 'agent' | 'global' | 'env' | 'none';
-  scopeConfigured: boolean;
-  inherited: boolean;
-}>;
+type ProviderObjectSection = ProviderConfigSection;
+type ProviderStatus = Partial<Record<ProviderObjectSection, ProviderConfigSectionStatus>>;
 
 const PROVIDERS: Array<{
   id: ProviderObjectSection;
@@ -241,6 +254,23 @@ function SecretHint({ path, status }: { path: string; status: SecretStatus }) {
   if (!status[path]) return null;
   return <small className="provider-secret-hint">Ja configurado. Deixe em branco para manter.</small>;
 }
+
+const WHATSAPP_ONBOARDING_MODE_COPY = {
+  manual: {
+    title: 'Manual: token existente',
+    description: 'Use quando o cliente ja tem WABA, Phone Number ID e access token. Nao abre o Embedded Signup.',
+  },
+  embeddedSignup: {
+    title: 'Self-hosted: meu app Meta',
+    description:
+      'Use para instalacoes open source no dominio do usuario. O usuario precisa informar o proprio App ID, Configuration ID e App Secret, e cadastrar o dominio HTTPS dele no app da Meta.',
+  },
+  coexistence: {
+    title: 'Sinergy gerenciado: Coexistence',
+    description:
+      'Usa o preset da Sinergy para coexistence. Funciona em dominios autorizados no app Meta da Sinergy ou por uma URL fixa de onboarding da Sinergy; dominios self-hosted aleatorios devem usar o modo self-hosted.',
+  },
+} as const;
 
 function providerConfigured(id: ProviderObjectSection, settings: CanvasFlowProviderSettings, secretStatus: SecretStatus) {
   if (id === 'openai') return secretStatus['openai.apiKey'] || Boolean(settings.openai.apiKey);
@@ -365,6 +395,80 @@ async function enviarMensagemCanvasFlow(texto) {
 </script>`;
 }
 
+function loadFacebookSdk(appId: string, graphApiVersion: string) {
+  const version = graphApiVersion || 'v20.0';
+  return new Promise<void>((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      reject(new Error('Facebook SDK indisponivel neste ambiente.'));
+      return;
+    }
+
+    const initSdk = () => {
+      const sdk = (window as any).FB;
+      if (!sdk?.init) return false;
+      sdk.init({
+        appId,
+        cookie: true,
+        xfbml: true,
+        autoLogAppEvents: true,
+        version,
+      });
+      return true;
+    };
+
+    if (initSdk()) {
+      resolve();
+      return;
+    }
+
+    const previousInit = (window as any).fbAsyncInit;
+    (window as any).fbAsyncInit = () => {
+      if (typeof previousInit === 'function') previousInit();
+      initSdk();
+      resolve();
+    };
+
+    const existingScript = document.getElementById('facebook-jssdk') as HTMLScriptElement | null;
+    if (existingScript) {
+      const interval = window.setInterval(() => {
+        if (!initSdk()) return;
+        window.clearInterval(interval);
+        resolve();
+      }, 100);
+      window.setTimeout(() => {
+        window.clearInterval(interval);
+        reject(new Error('Nao foi possivel carregar o Facebook SDK.'));
+      }, 10000);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'facebook-jssdk';
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    script.src = 'https://connect.facebook.net/en_US/sdk.js';
+    script.onerror = () => reject(new Error('Nao foi possivel carregar o Facebook SDK.'));
+    document.body.appendChild(script);
+  });
+}
+
+function isFacebookMessageOrigin(origin: string) {
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname === 'facebook.com' || hostname.endsWith('.facebook.com');
+  } catch {
+    return false;
+  }
+}
+
+function normalizeEmbeddedSignupData(data: Record<string, any>) {
+  return {
+    wabaId: data.waba_id || data.wabaId || data.business_account_id || data.businessAccountId || '',
+    phoneNumberId: data.phone_number_id || data.phoneNumberId || data.phone?.id || '',
+    phoneNumber: data.phone_number || data.phoneNumber || data.phone?.display_phone_number || data.display_phone_number || '',
+  };
+}
+
 interface ProviderConfigModalProps {
   agentId?: string;
   flowId?: string;
@@ -383,6 +487,7 @@ export function ProviderConfigModal({ agentId, flowId, flowName, onClose }: Prov
   const [saving, setSaving] = useState(false);
   const [widgetPreviewOpen, setWidgetPreviewOpen] = useState(DEFAULT_SETTINGS.webWidget.openByDefault);
   const [copiedWidgetCode, setCopiedWidgetCode] = useState(false);
+  const [embeddedSignupRunning, setEmbeddedSignupRunning] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -472,6 +577,127 @@ export function ProviderConfigModal({ agentId, flowId, flowName, onClose }: Prov
       setError(err instanceof Error ? err.message : 'Nao foi possivel salvar o provedor.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const launchWhatsappEmbeddedSignup = async () => {
+    const whatsapp = settings.whatsapp;
+    const appId = String(whatsapp.embeddedSignupAppId || '').trim();
+    const configId = String(whatsapp.embeddedSignupConfigId || '').trim();
+    if (!appId || !configId) {
+      setError('Informe App ID e Configuration ID para iniciar o Embedded Signup.');
+      return;
+    }
+
+    setEmbeddedSignupRunning(true);
+    setError('');
+    setMessage('');
+    try {
+      await loadFacebookSdk(appId, whatsapp.graphApiVersion || 'v20.0');
+      const result = await new Promise<{ code: string; session: Record<string, any> }>((resolve, reject) => {
+        let settled = false;
+        let code = '';
+        let session: Record<string, any> = {};
+        let sessionFinished = false;
+        let fallbackTimer: number | undefined;
+
+        const cleanup = () => {
+          window.removeEventListener('message', listener);
+          if (fallbackTimer) window.clearTimeout(fallbackTimer);
+        };
+        const fail = (err: Error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(err);
+        };
+        const maybeResolve = () => {
+          if (settled || !code) return;
+          if (!sessionFinished) {
+            fallbackTimer = window.setTimeout(() => {
+              if (settled) return;
+              settled = true;
+              cleanup();
+              resolve({ code, session });
+            }, 2500);
+            return;
+          }
+          settled = true;
+          cleanup();
+          resolve({ code, session });
+        };
+        const listener = (event: MessageEvent) => {
+          if (!isFacebookMessageOrigin(event.origin) || typeof event.data !== 'string') return;
+          try {
+            const parsed = JSON.parse(event.data);
+            if (parsed?.type !== 'WA_EMBEDDED_SIGNUP') return;
+            if (parsed.event === 'FINISH' || parsed.event === 'FINISH_ONLY_WABA') {
+              session = parsed.data || {};
+              sessionFinished = true;
+              maybeResolve();
+            }
+            if (parsed.event === 'CANCEL') {
+              fail(new Error('Embedded Signup cancelado antes de concluir.'));
+            }
+          } catch {
+            // Ignore SDK messages that are not JSON payloads.
+          }
+        };
+
+        window.addEventListener('message', listener);
+        const setup = String(whatsapp.embeddedSignupSolutionId || '').trim()
+          ? { solutionID: String(whatsapp.embeddedSignupSolutionId || '').trim() }
+          : {};
+        const extras: Record<string, any> = {
+          setup,
+          featureType: whatsapp.embeddedSignupFeatureType || '',
+          sessionInfoVersion: whatsapp.embeddedSignupSessionInfoVersion || '3',
+        };
+        if (String(whatsapp.embeddedSignupVersion || '').trim()) {
+          extras.version = Number(whatsapp.embeddedSignupVersion) || whatsapp.embeddedSignupVersion;
+        }
+
+        (window as any).FB.login((response: any) => {
+          if (!response?.authResponse?.code) {
+            fail(new Error('A Meta nao retornou o code do Embedded Signup.'));
+            return;
+          }
+          code = response.authResponse.code;
+          maybeResolve();
+        }, {
+          config_id: configId,
+          response_type: 'code',
+          override_default_response_type: true,
+          extras,
+        });
+      });
+
+      const session = normalizeEmbeddedSignupData(result.session || {});
+      const response = await canvasApi.completeWhatsappEmbeddedSignup({
+        code: result.code,
+        appId: appId,
+        appSecret: whatsapp.embeddedSignupAppSecret || '',
+        configId: configId,
+        solutionId: whatsapp.embeddedSignupSolutionId || '',
+        featureType: whatsapp.embeddedSignupFeatureType || '',
+        sessionInfoVersion: whatsapp.embeddedSignupSessionInfoVersion || '3',
+        embeddedSignupVersion: whatsapp.embeddedSignupVersion || '',
+        graphApiVersion: whatsapp.graphApiVersion || 'v20.0',
+        wabaId: session.wabaId,
+        phoneNumberId: session.phoneNumberId,
+        phoneNumber: session.phoneNumber,
+        coexistenceEnabled: whatsapp.onboardingMode === 'coexistence' || whatsapp.coexistenceEnabled === true,
+        redirectUri: window.location.href,
+      }, { agentId: scopedAgentId });
+      setSettings(mergeSettings(response.settings));
+      setSecretStatus(response.secretStatus || {});
+      setProviderStatus(response.providerStatus || {});
+      window.dispatchEvent(new Event('canvas-flow-provider-config-updated'));
+      setMessage('Onboarding WhatsApp concluido e configuracao salva.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nao foi possivel concluir o onboarding WhatsApp.');
+    } finally {
+      setEmbeddedSignupRunning(false);
     }
   };
 
@@ -759,6 +985,9 @@ export function ProviderConfigModal({ agentId, flowId, flowName, onClose }: Prov
     }
 
     if (activeProvider === 'whatsapp') {
+      const onboardingMode = settings.whatsapp.onboardingMode || 'manual';
+      const onboardingCopy = WHATSAPP_ONBOARDING_MODE_COPY[onboardingMode];
+
       return (
         <div className="provider-form-grid">
           <label>
@@ -783,6 +1012,100 @@ export function ProviderConfigModal({ agentId, flowId, flowName, onClose }: Prov
 
           {settings.whatsapp.provider === 'meta' && (
             <>
+              <label>
+                Modo de onboarding
+                <select
+                  value={onboardingMode}
+                  onChange={(event) => {
+                    const onboardingMode = event.target.value as CanvasFlowProviderSettings['whatsapp']['onboardingMode'];
+                    updateSection('whatsapp', {
+                      onboardingMode,
+                      coexistenceEnabled: onboardingMode === 'coexistence',
+                      syncMessageEchoes: onboardingMode === 'coexistence' ? true : settings.whatsapp.syncMessageEchoes,
+                      ...(onboardingMode === 'coexistence'
+                        ? {
+                            embeddedSignupAppId: settings.whatsapp.embeddedSignupAppId || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupAppId,
+                            embeddedSignupConfigId: settings.whatsapp.embeddedSignupConfigId || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupConfigId,
+                            embeddedSignupSessionInfoVersion:
+                              settings.whatsapp.embeddedSignupSessionInfoVersion || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupSessionInfoVersion,
+                            embeddedSignupVersion: settings.whatsapp.embeddedSignupVersion || SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupVersion,
+                          }
+                        : onboardingMode === 'embeddedSignup'
+                          ? {
+                              embeddedSignupAppId:
+                                settings.whatsapp.embeddedSignupAppId === SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupAppId
+                                  ? ''
+                                  : settings.whatsapp.embeddedSignupAppId,
+                              embeddedSignupConfigId:
+                                settings.whatsapp.embeddedSignupConfigId === SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupConfigId
+                                  ? ''
+                                  : settings.whatsapp.embeddedSignupConfigId,
+                            }
+                        : {}),
+                    });
+                  }}
+                >
+                  <option value="manual">Manual: token existente</option>
+                  <option value="embeddedSignup">Self-hosted: meu app Meta</option>
+                  <option value="coexistence">Sinergy gerenciado: Coexistence</option>
+                </select>
+              </label>
+              <section className="provider-onboarding-note">
+                <ShieldCheck size={17} />
+                <div>
+                  <strong>{onboardingCopy.title}</strong>
+                  <p>{onboardingCopy.description}</p>
+                </div>
+              </section>
+              {(onboardingMode === 'embeddedSignup' || onboardingMode === 'coexistence') && (
+                <>
+                  <label>
+                    Meta App ID
+                    <input value={settings.whatsapp.embeddedSignupAppId || ''} onChange={(event) => updateSection('whatsapp', { embeddedSignupAppId: event.target.value })} />
+                  </label>
+                  <label>
+                    Configuration ID
+                    <input value={settings.whatsapp.embeddedSignupConfigId || ''} onChange={(event) => updateSection('whatsapp', { embeddedSignupConfigId: event.target.value })} />
+                  </label>
+                  <label>
+                    App secret
+                    <input type="password" value={settings.whatsapp.embeddedSignupAppSecret || ''} onChange={(event) => updateSection('whatsapp', { embeddedSignupAppSecret: event.target.value })} />
+                    <SecretHint path="whatsapp.embeddedSignupAppSecret" status={secretStatus} />
+                  </label>
+                  <label>
+                    Solution ID
+                    <input value={settings.whatsapp.embeddedSignupSolutionId || ''} onChange={(event) => updateSection('whatsapp', { embeddedSignupSolutionId: event.target.value })} />
+                  </label>
+                  <label>
+                    Feature type
+                    <input value={settings.whatsapp.embeddedSignupFeatureType || ''} placeholder="Opcional" onChange={(event) => updateSection('whatsapp', { embeddedSignupFeatureType: event.target.value })} />
+                  </label>
+                  <label>
+                    Session info version
+                    <input value={settings.whatsapp.embeddedSignupSessionInfoVersion || '3'} onChange={(event) => updateSection('whatsapp', { embeddedSignupSessionInfoVersion: event.target.value })} />
+                  </label>
+                  <button className="provider-action-button" type="button" onClick={launchWhatsappEmbeddedSignup} disabled={embeddedSignupRunning || saving}>
+                    {embeddedSignupRunning ? <Loader2 size={16} className="spin" /> : <MessageCircle size={16} />}
+                    {embeddedSignupRunning ? 'Conectando...' : 'Conectar WhatsApp'}
+                  </button>
+                </>
+              )}
+              <label className="provider-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={settings.whatsapp.syncMessageEchoes !== false}
+                  onChange={(event) => updateSection('whatsapp', { syncMessageEchoes: event.target.checked })}
+                />
+                Sincronizar mensagens enviadas pelo WhatsApp Business app
+              </label>
+              <label className="provider-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={settings.whatsapp.syncHistory === true}
+                  onChange={(event) => updateSection('whatsapp', { syncHistory: event.target.checked })}
+                />
+                Importar historico quando a Meta enviar o evento
+              </label>
               <label>
                 Verify token
                 <input value={settings.whatsapp.verifyToken} onChange={(event) => updateSection('whatsapp', { verifyToken: event.target.value })} />

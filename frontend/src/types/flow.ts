@@ -5,6 +5,7 @@ export type FlowChannel = 'webWidget' | 'whatsapp';
 export type FlowLlmProvider = 'openai' | 'azure_openai' | 'gemini' | 'claude' | 'grok' | 'bedrock';
 export type WhatsappProvider = 'meta' | 'blip' | 'sinch';
 export type WhatsappDeliveryMode = 'provider' | 'apiResponse';
+export type WhatsappOnboardingMode = 'manual' | 'embeddedSignup' | 'coexistence';
 export type WhatsappSinchApiMode = 'conversation' | 'relay';
 export type WidgetPosition = 'right' | 'left';
 export type RichMessageType = 'text' | 'buttons' | 'quickReplies' | 'list' | 'carousel' | 'appointmentFlow' | 'image' | 'document';
@@ -291,12 +292,23 @@ export interface WebWidgetConfig {
 export interface WhatsappConfig {
   provider: WhatsappProvider;
   deliveryMode?: WhatsappDeliveryMode;
+  onboardingMode?: WhatsappOnboardingMode;
   verifyToken: string;
   businessAccountId?: string;
   phoneNumberId: string;
   accessToken: string;
   graphApiVersion: string;
   autoReply: boolean;
+  coexistenceEnabled?: boolean;
+  syncMessageEchoes?: boolean;
+  syncHistory?: boolean;
+  embeddedSignupAppId?: string;
+  embeddedSignupConfigId?: string;
+  embeddedSignupAppSecret?: string;
+  embeddedSignupSolutionId?: string;
+  embeddedSignupFeatureType?: string;
+  embeddedSignupSessionInfoVersion?: string;
+  embeddedSignupVersion?: string;
   blipContractId?: string;
   blipAuthorizationKey?: string;
   sinchProjectId?: string;
@@ -799,6 +811,23 @@ export type CanvasFlowProviderSettings = {
   };
   webWidget: WebWidgetConfig;
   whatsapp: WhatsappConfig;
+};
+
+export type ProviderConfigSource = 'agent' | 'global' | 'env' | 'none';
+export type ProviderConfigSection = Exclude<keyof CanvasFlowProviderSettings, 'llmProvider'>;
+
+export type ProviderConfigSectionStatus = {
+  configured: boolean;
+  source: ProviderConfigSource;
+  scopeConfigured: boolean;
+  inherited: boolean;
+};
+
+export type ProviderConfigApiResponse = {
+  settings: CanvasFlowProviderSettings;
+  secretStatus: Record<string, boolean>;
+  providerStatus?: Partial<Record<ProviderConfigSection, ProviderConfigSectionStatus>>;
+  onboarding?: Record<string, unknown>;
 };
 
 export interface TestMessage {

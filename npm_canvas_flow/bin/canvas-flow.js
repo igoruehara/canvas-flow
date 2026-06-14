@@ -19,6 +19,12 @@ const INFRA_COMPOSE_FILE = path.join(PACKAGE_ROOT, 'templates', 'docker-compose.
 const INFRA_PROJECT_NAME = 'canvas-flow';
 const INFRA_BASE_SERVICES = ['mongo'];
 const INFRA_FULL_SERVICES = ['mongo', 'etcd', 'minio', 'milvus'];
+const SINERGY_WHATSAPP_COEXISTENCE_PRESET = {
+  embeddedSignupAppId: '617497366521622',
+  embeddedSignupConfigId: '1952866105586018',
+  embeddedSignupSessionInfoVersion: '3',
+  embeddedSignupVersion: 'v3',
+};
 
 const STARTUP_BANNER = [
   '   ______                            ________               ',
@@ -318,6 +324,7 @@ function baseConfig() {
       whatsapp: {
         provider: 'meta',
         deliveryMode: 'provider',
+        onboardingMode: 'manual',
         autoReply: true,
         verifyToken: '',
         accessToken: '',
@@ -325,6 +332,16 @@ function baseConfig() {
         wabaId: '',
         phoneNumberId: '',
         graphApiVersion: 'v20.0',
+        coexistenceEnabled: false,
+        syncMessageEchoes: true,
+        syncHistory: false,
+        embeddedSignupAppId: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupAppId,
+        embeddedSignupConfigId: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupConfigId,
+        embeddedSignupAppSecret: '',
+        embeddedSignupSolutionId: '',
+        embeddedSignupFeatureType: '',
+        embeddedSignupSessionInfoVersion: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupSessionInfoVersion,
+        embeddedSignupVersion: SINERGY_WHATSAPP_COEXISTENCE_PRESET.embeddedSignupVersion,
         blipContractId: '',
         blipAuthorizationKey: '',
         sinchProjectId: '',
@@ -401,6 +418,19 @@ function mergeConfig(defaults, overrides) {
   return output;
 }
 
+function applyWhatsappCoexistenceDefaults(config) {
+  const whatsapp = config?.providers?.whatsapp;
+  if (!isPlainObject(whatsapp)) return false;
+
+  let changed = false;
+  for (const [key, value] of Object.entries(SINERGY_WHATSAPP_COEXISTENCE_PRESET)) {
+    if (String(whatsapp[key] || '').trim()) continue;
+    whatsapp[key] = value;
+    changed = true;
+  }
+  return changed;
+}
+
 function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
@@ -439,6 +469,9 @@ function loadConfig(configPath) {
 
   const config = mergeConfig(baseConfig(), parsed);
   let changed = false;
+  if (applyWhatsappCoexistenceDefaults(config)) {
+    changed = true;
+  }
   if (!config.auth.apiToken) {
     config.auth.apiToken = randomSecret('cf_master_');
     changed = true;
@@ -529,6 +562,17 @@ function isLoopbackUrl(value) {
   }
 }
 
+function normalizeProviderName(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (text === 'azure' || text === 'azure_openai' || text === 'azure-openai' || text === 'azureopenai') {
+    return 'azure';
+  }
+  if (['openai', 'gemini', 'claude', 'grok', 'bedrock'].includes(text)) {
+    return text;
+  }
+  return 'openai';
+}
+
 function applyEnvironment(config, paths, flags) {
   const port = Number(flags.port || config.server.port || 3333);
   const publicUrl = String(flags['public-url'] || config.server.publicUrl || `http://localhost:${port}`).replace(/\/$/, '');
@@ -537,7 +581,7 @@ function applyEnvironment(config, paths, flags) {
   const claude = config.providers.claude || {};
   const grok = config.providers.grok || {};
   const bedrock = config.providers.bedrock || {};
-  const azureOpenAI = config.providers.azureOpenAI || {};
+  const azureOpenAI = config.providers.azureOpenAI || config.providers.azureOpenai || {};
   const milvus = config.providers.milvus || {};
   const azureBlob = config.providers.azureBlob || {};
   const azureSearch = config.providers.azureSearch || {};
@@ -553,6 +597,9 @@ function applyEnvironment(config, paths, flags) {
   const httpBatch = config.httpBatch || {};
   const agentOps = config.agentOps || {};
   const aws = config.aws || {};
+  const configuredProvider = normalizeProviderName(openai.provider);
+  const azureOpenAIEnabled = configuredProvider === 'azure' || asBool(azureOpenAI.enabled);
+  const openaiProvider = azureOpenAIEnabled ? 'azure' : configuredProvider;
 
   setEnv('CANVAS_FLOW_HOME', paths.homeDir);
   setEnv('CANVAS_FLOW_CONFIG_FILE', paths.configPath);
@@ -613,7 +660,7 @@ function applyEnvironment(config, paths, flags) {
   setEnv('CANVAS_FLOW_MAX_STEP_VISITS', config.runtime.maxStepVisits || 10);
   setEnv('CANVAS_FLOW_PROVIDER_CACHE_MS', config.runtime.providerCacheMs || 10000);
 
-  setEnv('OPENAI_PROVIDER', openai.provider || 'openai');
+  setEnv('OPENAI_PROVIDER', openaiProvider);
   setEnv('LLM_PROVIDER', openai.llmProvider);
   setEnv('OPENAI_API_KEY', openai.apiKey);
   setEnv('OPENAI_CHAT_MODEL', openai.chatModel);
@@ -644,7 +691,7 @@ function applyEnvironment(config, paths, flags) {
   setEnv('BEDROCK_CHAT_MODEL', bedrock.chatModel || 'anthropic.claude-sonnet-4-6');
   setEnv('BEDROCK_MODEL', bedrock.chatModel || 'anthropic.claude-sonnet-4-6');
 
-  setBoolEnv('AZURE_OPENAI_ENABLED', asBool(azureOpenAI.enabled));
+  setBoolEnv('AZURE_OPENAI_ENABLED', azureOpenAIEnabled);
   setEnv('AZURE_OPENAI_API_KEY', azureOpenAI.apiKey);
   setEnv('AZURE_OPENAI_ENDPOINT', azureOpenAI.endpoint || azureOpenAI.apiBasePath);
   setEnv('AZURE_OPENAI_API_BASE_PATH', azureOpenAI.apiBasePath || azureOpenAI.endpoint);
@@ -701,6 +748,7 @@ function applyEnvironment(config, paths, flags) {
 
   setEnv('WHATSAPP_PROVIDER', whatsapp.provider || 'meta');
   setEnv('WHATSAPP_DELIVERY_MODE', whatsapp.deliveryMode || 'provider');
+  setEnv('WHATSAPP_ONBOARDING_MODE', whatsapp.onboardingMode || 'manual');
   setBoolEnv('WHATSAPP_AUTO_REPLY', whatsapp.autoReply !== false);
   setEnv('WHATSAPP_VERIFY_TOKEN', whatsapp.verifyToken);
   setEnv('WHATSAPP_ACCESS_TOKEN', whatsapp.accessToken);
@@ -708,6 +756,16 @@ function applyEnvironment(config, paths, flags) {
   setEnv('WHATSAPP_WABA_ID', whatsapp.wabaId || whatsapp.businessAccountId);
   setEnv('WHATSAPP_PHONE_NUMBER_ID', whatsapp.phoneNumberId);
   setEnv('WHATSAPP_GRAPH_API_VERSION', whatsapp.graphApiVersion || 'v20.0');
+  setBoolEnv('WHATSAPP_COEXISTENCE_ENABLED', whatsapp.coexistenceEnabled === true || whatsapp.onboardingMode === 'coexistence');
+  setBoolEnv('WHATSAPP_SYNC_MESSAGE_ECHOES', whatsapp.syncMessageEchoes !== false);
+  setBoolEnv('WHATSAPP_SYNC_HISTORY', whatsapp.syncHistory === true);
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_APP_ID', whatsapp.embeddedSignupAppId);
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID', whatsapp.embeddedSignupConfigId);
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_APP_SECRET', whatsapp.embeddedSignupAppSecret);
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_SOLUTION_ID', whatsapp.embeddedSignupSolutionId);
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_FEATURE_TYPE', whatsapp.embeddedSignupFeatureType);
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_SESSION_INFO_VERSION', whatsapp.embeddedSignupSessionInfoVersion || '3');
+  setEnv('WHATSAPP_EMBEDDED_SIGNUP_VERSION', whatsapp.embeddedSignupVersion);
   setEnv('BLIP_CONTRACT_ID', whatsapp.blipContractId);
   setEnv('BLIP_AUTHORIZATION_KEY', whatsapp.blipAuthorizationKey);
   setEnv('SINCH_PROJECT_ID', whatsapp.sinchProjectId);

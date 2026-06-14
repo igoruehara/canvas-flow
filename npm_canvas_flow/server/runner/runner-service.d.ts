@@ -132,6 +132,8 @@ export declare class RunnerService implements OnModuleInit, OnModuleDestroy {
     private refreshOpenAIClient;
     private getOpenAIClient;
     private normalizeFlowLlmProvider;
+    private isRuntimeLlmProviderConfigured;
+    private resolveRuntimeLlmProvider;
     private getOpenAIClientForProvider;
     private getChatModelForProvider;
     private flowLlmProvider;
@@ -1600,10 +1602,20 @@ export declare class RunnerService implements OnModuleInit, OnModuleDestroy {
     private normalizeFlowAttachmentFiles;
     private enrichFlowReplyDataWithAttachmentUrls;
     private extractFlowReplyData;
+    private extractMetaWhatsappMessageText;
+    private normalizeWhatsappPhone;
+    private inferWhatsappHistoryRole;
     private extractMetaWhatsappMessages;
     private extractBlipWhatsappMessages;
     private extractSinchWhatsappMessages;
     private extractWhatsappMessages;
+    private pushMetaWhatsappSyncMessage;
+    private getMetaWhatsappMessageArray;
+    private extractMetaWhatsappHistoryEvents;
+    private extractMetaWhatsappSyncEvents;
+    private extractWhatsappSyncEvents;
+    private buildWhatsappSyncDedupeKey;
+    private persistWhatsappSyncEvents;
     private getAssistantText;
     private whatsappDeliveryKey;
     private buildWhatsappDedupeKey;
@@ -1738,22 +1750,30 @@ export declare class RunnerService implements OnModuleInit, OnModuleDestroy {
     runWhatsappWebhook(flowId: string, payload: any): Promise<{
         ok: boolean;
         received: number;
+        synced: number;
+        syncResults: any[];
         ignored: boolean;
         results?: undefined;
     } | {
         ok: boolean;
         received: any;
+        synced: number;
+        syncResults: any[];
         results: any[];
         ignored?: undefined;
     }>;
     runWhatsappMainWebhook(agentId: string, payload: any): Promise<{
         ok: boolean;
         received: number;
+        synced: number;
+        syncResults: any[];
         ignored: boolean;
         results?: undefined;
     } | {
         ok: boolean;
         received: any;
+        synced: number;
+        syncResults: any[];
         results: any[];
         ignored?: undefined;
     }>;

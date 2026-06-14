@@ -146,6 +146,21 @@ O primeiro start cria `~/.canvas-flow/config.json`. Edite esse arquivo para
 trocar Mongo, Milvus, OpenAI, Azure, SQS e demais configs privadas sem mexer nos
 `.env` atuais de `frontend` e `backend`.
 
+### WhatsApp oficial em instalacoes open source
+
+O Canvas Flow separa o onboarding da Meta em dois modos:
+
+- **Sinergy gerenciado / Coexistence**: usa o preset da Sinergy. Indicado quando
+  o onboarding roda por uma URL fixa da Sinergy ou por dominios autorizados no
+  app Meta da Sinergy.
+- **Self-hosted / app Meta proprio**: indicado quando cada usuario hospeda o
+  Canvas Flow no proprio dominio. Nesse caso, o usuario informa o proprio App ID,
+  Configuration ID e App Secret, e cadastra o dominio HTTPS/redirect URI no
+  painel da Meta.
+
+Para conexao manual, informe WABA ID, Phone Number ID e access token ja
+existentes.
+
 Comandos úteis para configurar depois da instalação:
 
 ```bash

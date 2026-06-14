@@ -65,6 +65,7 @@ const createService = () => {
     memoryService,
     ragService,
     configService,
+    providerConfigService,
     flowTagService,
     sqsTransitionService,
     mcpOAuthService,
@@ -72,6 +73,65 @@ const createService = () => {
 };
 
 describe('RunnerService', () => {
+  it('uses agent effective provider settings and normalizes aliases before model creation', async () => {
+    const { service, providerConfigService } = createService();
+    const agentSettings: any = {
+      llmProvider: 'azure',
+      openai: { enabled: false, apiKey: '', chatModel: 'gpt-global' },
+      azureOpenai: {
+        enabled: true,
+        apiKey: 'agent-azure-key',
+        endpoint: 'https://agent-azure.example.com',
+        apiVersion: '2024-10-21',
+        chatDeploymentName: 'agent-chat',
+      },
+    };
+    providerConfigService.getEffectiveSettings.mockResolvedValueOnce(agentSettings);
+    (providerConfigService.toOpenAIRuntimeConfig as jest.Mock).mockReturnValueOnce({
+      openaiProvider: 'azure',
+      azureOpenAIEnabled: true,
+      azureOpenAIChatDeployment: 'agent-chat',
+    });
+
+    const model = await (service as any).getChatModelForProvider('azure_openai', undefined, 'agent-override');
+
+    expect(providerConfigService.getEffectiveSettings).toHaveBeenCalledWith('agent-override');
+    expect(providerConfigService.toOpenAIRuntimeConfig).toHaveBeenCalledWith(agentSettings, 'azure');
+    expect(model).toBe('agent-chat');
+  });
+
+  it('uses the effective fallback provider when the requested flow provider is unconfigured', async () => {
+    const { service, providerConfigService } = createService();
+    const fallbackSettings: any = {
+      llmProvider: 'openai',
+      openai: {
+        enabled: true,
+        apiKey: 'fallback-openai-key',
+        chatModel: 'gpt-fallback',
+      },
+      azureOpenai: {
+        enabled: false,
+        apiKey: '',
+        endpoint: '',
+        chatDeploymentName: '',
+      },
+    };
+    providerConfigService.getEffectiveSettings.mockResolvedValueOnce(fallbackSettings);
+    (providerConfigService.toOpenAIRuntimeConfig as jest.Mock).mockImplementationOnce((settings: any, provider?: string) => ({
+      openaiProvider: provider || settings.llmProvider,
+      openaiApiKey: settings.openai.apiKey,
+      openaiChatModel: settings.openai.chatModel,
+      azureOpenAIEnabled: provider === 'azure',
+      azureOpenAIChatDeployment: 'should-not-use-azure',
+    }));
+
+    const model = await (service as any).getChatModelForProvider('azure_openai', undefined, 'agent-fallback');
+
+    expect(providerConfigService.getEffectiveSettings).toHaveBeenCalledWith('agent-fallback');
+    expect(providerConfigService.toOpenAIRuntimeConfig).toHaveBeenCalledWith(fallbackSettings, 'openai');
+    expect(model).toBe('gpt-fallback');
+  });
+
   it('runs a simple message flow and waits on input', async () => {
     const { service } = createService();
     const config = {

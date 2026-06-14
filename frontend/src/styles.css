@@ -8209,6 +8209,27 @@ select:focus {
   width: 100%;
 }
 
+.provider-action-button {
+  grid-column: 1 / -1;
+  min-height: 40px;
+  border: none;
+  border-radius: 8px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffffff;
+  font-weight: 800;
+  background: #0f766e;
+  cursor: pointer;
+}
+
+.provider-action-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .provider-form-grid .provider-checkbox-label input {
   width: 16px;
   flex: 0 0 auto;
@@ -8218,6 +8239,38 @@ select:focus {
   color: #64748b;
   font-size: 11px;
   font-weight: 700;
+}
+
+.provider-onboarding-note {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: flex-start;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f0f9ff;
+  color: #0f172a;
+}
+
+.provider-onboarding-note svg {
+  margin-top: 1px;
+  color: #0284c7;
+}
+
+.provider-onboarding-note strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.provider-onboarding-note p {
+  margin: 3px 0 0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .provider-widget-context-card {

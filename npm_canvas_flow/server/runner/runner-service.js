@@ -173,12 +173,37 @@ let RunnerService = class RunnerService {
             return 'bedrock';
         return '';
     }
+    isRuntimeLlmProviderConfigured(settings, provider) {
+        if (provider === 'openai')
+            return Boolean(String(settings.openai?.apiKey || '').trim());
+        if (provider === 'azure') {
+            return Boolean(String(settings.azureOpenai?.endpoint || '').trim() &&
+                String(settings.azureOpenai?.apiKey || '').trim());
+        }
+        if (provider === 'gemini')
+            return Boolean(String(settings.gemini?.apiKey || '').trim());
+        if (provider === 'claude')
+            return Boolean(String(settings.claude?.apiKey || '').trim());
+        if (provider === 'grok')
+            return Boolean(String(settings.grok?.apiKey || '').trim());
+        if (provider === 'bedrock') {
+            return Boolean(String(settings.bedrock?.apiKey || '').trim() &&
+                String(settings.bedrock?.baseUrl || '').trim());
+        }
+        return false;
+    }
+    resolveRuntimeLlmProvider(settings, provider) {
+        const requested = this.normalizeFlowLlmProvider(provider);
+        if (requested && this.isRuntimeLlmProviderConfigured(settings, requested))
+            return requested;
+        return this.normalizeFlowLlmProvider(settings?.llmProvider || '') || requested || undefined;
+    }
     async getOpenAIClientForProvider(provider, agentId) {
         const normalized = this.normalizeFlowLlmProvider(provider);
         if (!normalized && !agentId)
             return await this.getOpenAIClient();
         const settings = await this.getProviderSettings(agentId);
-        const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, normalized);
+        const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, this.resolveRuntimeLlmProvider(settings, normalized));
         return (0, openai_provider_1.createOpenAIClient)(this.configService, runtime);
     }
     async getChatModelForProvider(provider, model, agentId) {
@@ -186,7 +211,7 @@ let RunnerService = class RunnerService {
         if (!normalized && !agentId)
             return await this.getChatModel(model);
         const settings = await this.getProviderSettings(agentId);
-        const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, normalized);
+        const runtime = this.providerConfigService.toOpenAIRuntimeConfig(settings, this.resolveRuntimeLlmProvider(settings, normalized));
         return (0, openai_provider_1.getOpenAIChatModel)(this.configService, model, runtime);
     }
     flowLlmProvider(config, fallback) {
@@ -10392,6 +10417,10 @@ let RunnerService = class RunnerService {
             'businessAccountId',
             'phoneNumberId',
             'accessToken',
+            'embeddedSignupAppId',
+            'embeddedSignupConfigId',
+            'embeddedSignupAppSecret',
+            'embeddedSignupSolutionId',
             'blipContractId',
             'blipAuthorizationKey',
             'sinchProjectId',
@@ -10406,6 +10435,10 @@ let RunnerService = class RunnerService {
         if (String(whatsapp.provider || 'meta') !== 'meta')
             return true;
         if (String(whatsapp.deliveryMode || 'provider') === 'apiResponse')
+            return true;
+        if (String(whatsapp.onboardingMode || 'manual') !== 'manual')
+            return true;
+        if (whatsapp.coexistenceEnabled === true || whatsapp.syncMessageEchoes === false || whatsapp.syncHistory === true)
             return true;
         if (whatsapp.autoReply === false)
             return true;
@@ -12073,23 +12106,50 @@ let RunnerService = class RunnerService {
         const parsed = this.parsePossibleJsonValue(raw);
         return this.isPlainObject(parsed) ? await this.enrichFlowReplyDataWithAttachmentUrls(parsed, config, flowId) : undefined;
     }
+    extractMetaWhatsappMessageText(message, flowReplyData) {
+        return (message?.text?.body ||
+            message?.button?.payload ||
+            message?.button?.text ||
+            message?.interactive?.button_reply?.id ||
+            message?.interactive?.button_reply?.title ||
+            message?.interactive?.list_reply?.id ||
+            message?.interactive?.list_reply?.title ||
+            (flowReplyData ? JSON.stringify(flowReplyData) : '') ||
+            message?.interactive?.nfm_reply?.body ||
+            message?.image?.caption ||
+            message?.document?.caption ||
+            message?.audio?.id ||
+            message?.video?.caption ||
+            message?.contacts?.[0]?.name?.formatted_name ||
+            '');
+    }
+    normalizeWhatsappPhone(value) {
+        return String(value || '').replace(/[^\d]/g, '');
+    }
+    inferWhatsappHistoryRole(message, customerPhone, businessPhone) {
+        const from = this.normalizeWhatsappPhone(message?.from);
+        const to = this.normalizeWhatsappPhone(message?.to || message?.recipient_id);
+        const customer = this.normalizeWhatsappPhone(customerPhone);
+        const business = this.normalizeWhatsappPhone(businessPhone);
+        if (customer && from === customer)
+            return 'user';
+        if (customer && to === customer)
+            return 'assistant';
+        if (business && from === business)
+            return 'assistant';
+        return message?.from_me === true || message?.fromMe === true ? 'assistant' : 'user';
+    }
     async extractMetaWhatsappMessages(payload, config, flowId) {
         const messages = [];
         for (const entry of payload?.entry || []) {
             for (const change of entry?.changes || []) {
+                const field = String(change?.field || '');
+                if (['smb_message_echoes', 'history', 'smb_app_state_sync'].includes(field))
+                    continue;
                 const value = change?.value || {};
                 for (const message of value?.messages || []) {
                     const flowReplyData = await this.extractFlowReplyData(message, config, flowId);
-                    const text = message?.text?.body ||
-                        message?.button?.payload ||
-                        message?.button?.text ||
-                        message?.interactive?.button_reply?.id ||
-                        message?.interactive?.button_reply?.title ||
-                        message?.interactive?.list_reply?.id ||
-                        message?.interactive?.list_reply?.title ||
-                        (flowReplyData ? JSON.stringify(flowReplyData) : '') ||
-                        message?.interactive?.nfm_reply?.body ||
-                        '';
+                    const text = this.extractMetaWhatsappMessageText(message, flowReplyData);
                     if (!text)
                         continue;
                     messages.push({
@@ -12157,6 +12217,216 @@ let RunnerService = class RunnerService {
         if (provider === 'sinch')
             return this.extractSinchWhatsappMessages(payload);
         return await this.extractMetaWhatsappMessages(payload, config, flowId);
+    }
+    pushMetaWhatsappSyncMessage(events, params) {
+        const message = params.message || {};
+        const value = params.value || {};
+        const metadata = value?.metadata || {};
+        const text = this.extractMetaWhatsappMessageText(message);
+        if (!text)
+            return;
+        const customerPhone = String(params.customerPhone ||
+            message?.to ||
+            message?.recipient_id ||
+            message?.customer_phone_number ||
+            message?.customerPhoneNumber ||
+            message?.contacts?.[0]?.wa_id ||
+            message?.from ||
+            '').trim();
+        const role = params.role || this.inferWhatsappHistoryRole(message, customerPhone, metadata?.display_phone_number);
+        const from = role === 'assistant'
+            ? customerPhone || String(message?.to || message?.recipient_id || message?.from || '').trim()
+            : String(message?.from || customerPhone || '').trim();
+        if (!from)
+            return;
+        events.push({
+            provider: 'meta',
+            syncKind: params.kind,
+            role,
+            from,
+            text,
+            messageId: message?.id,
+            timestamp: message?.timestamp,
+            phoneNumberId: metadata?.phone_number_id,
+            displayPhoneNumber: metadata?.display_phone_number,
+            raw: message,
+        });
+    }
+    getMetaWhatsappMessageArray(value) {
+        if (Array.isArray(value?.messages))
+            return value.messages;
+        if (Array.isArray(value?.message_echoes))
+            return value.message_echoes;
+        if (Array.isArray(value?.smb_message_echoes))
+            return value.smb_message_echoes;
+        if (Array.isArray(value?.data?.messages))
+            return value.data.messages;
+        if (this.isPlainObject(value?.message))
+            return [value.message];
+        return [];
+    }
+    extractMetaWhatsappHistoryEvents(events, historySource, value) {
+        const histories = Array.isArray(historySource) ? historySource : [historySource].filter(Boolean);
+        histories.forEach((history) => {
+            const threads = Array.isArray(history?.threads) ? history.threads : [];
+            threads.forEach((thread) => {
+                const customerPhone = String(thread?.id || thread?.wa_id || thread?.phone || '').trim();
+                const messages = Array.isArray(thread?.messages) ? thread.messages : [];
+                messages.forEach((message) => {
+                    this.pushMetaWhatsappSyncMessage(events, {
+                        message,
+                        kind: 'history',
+                        value,
+                        customerPhone,
+                    });
+                });
+            });
+        });
+    }
+    extractMetaWhatsappSyncEvents(payload, config) {
+        const whatsapp = config?.whatsapp || {};
+        const syncEchoes = whatsapp.syncMessageEchoes !== false;
+        const syncHistory = whatsapp.syncHistory === true;
+        const events = [];
+        if (syncEchoes && String(payload?.event || '') === 'smb_message_echoes') {
+            const data = payload?.data || {};
+            this.getMetaWhatsappMessageArray(data).forEach((message) => {
+                this.pushMetaWhatsappSyncMessage(events, {
+                    message,
+                    kind: 'message_echo',
+                    value: data,
+                    role: 'assistant',
+                });
+            });
+        }
+        if (syncHistory && String(payload?.event || '') === 'history') {
+            const data = payload?.data || {};
+            this.extractMetaWhatsappHistoryEvents(events, data?.history || data, data);
+        }
+        for (const entry of payload?.entry || []) {
+            for (const change of entry?.changes || []) {
+                const field = String(change?.field || '');
+                const value = change?.value || {};
+                if (field === 'smb_message_echoes' && syncEchoes) {
+                    this.getMetaWhatsappMessageArray(value).forEach((message) => {
+                        this.pushMetaWhatsappSyncMessage(events, {
+                            message,
+                            kind: 'message_echo',
+                            value,
+                            role: 'assistant',
+                        });
+                    });
+                }
+                if (field === 'history' && syncHistory) {
+                    this.extractMetaWhatsappHistoryEvents(events, value?.history || value, value);
+                }
+            }
+        }
+        return events;
+    }
+    async extractWhatsappSyncEvents(payload, config) {
+        const provider = this.normalizeWhatsappProvider(config);
+        if (provider !== 'meta')
+            return [];
+        return this.extractMetaWhatsappSyncEvents(payload, config);
+    }
+    buildWhatsappSyncDedupeKey(flowRecord, event) {
+        const providerMessageId = String(event?.messageId || '').trim();
+        const fallback = providerMessageId || (0, crypto_1.createHash)('sha1')
+            .update(JSON.stringify({
+            kind: event?.syncKind,
+            role: event?.role,
+            from: event?.from,
+            text: event?.text,
+            timestamp: event?.timestamp,
+        }))
+            .digest('hex');
+        return [
+            flowRecord?.organizationId || 'global',
+            flowRecord?.agentId || 'default-agent',
+            flowRecord?._id || 'flow',
+            event?.provider || 'whatsapp',
+            event?.syncKind || 'sync',
+            fallback,
+        ].join(':');
+    }
+    async persistWhatsappSyncEvents(flowRecord, flowId, events) {
+        const results = [];
+        for (const event of events) {
+            const conversationId = `whatsapp-${event.from}`;
+            const conversationOwnerId = `whatsapp:${event.from}`;
+            const dedupeKey = this.buildWhatsappSyncDedupeKey(flowRecord, event);
+            const dedupe = await this.sqsTransitionService.tryStartMessageDedupe({
+                dedupeKey,
+                organizationId: flowRecord?.organizationId,
+                agentId: flowRecord?.agentId,
+                flowId,
+                conversationId,
+                channel: 'whatsapp',
+                provider: event.provider || 'meta',
+                providerMessageId: event.messageId,
+            });
+            if (!dedupe.acquired) {
+                results.push({
+                    from: event.from,
+                    messageId: event.messageId,
+                    syncKind: event.syncKind,
+                    duplicate: true,
+                    skipped: true,
+                    status: dedupe.status,
+                });
+                continue;
+            }
+            try {
+                await this.memoryService.addTurn({
+                    agentId: flowRecord?.agentId,
+                    conversationId,
+                    role: event.role === 'assistant' ? 'assistant' : 'user',
+                    content: event.text,
+                    metadata: {
+                        kind: 'message',
+                        source: 'whatsapp_coexistence',
+                        syncKind: event.syncKind,
+                        organizationId: flowRecord?.organizationId,
+                        flowId,
+                        entryFlowId: flowId,
+                        activeFlowId: flowId,
+                        conversationOwnerId,
+                        whatsapp: {
+                            provider: event.provider || 'meta',
+                            from: event.from,
+                            messageId: event.messageId,
+                            phoneNumberId: event.phoneNumberId,
+                            displayPhoneNumber: event.displayPhoneNumber,
+                            timestamp: event.timestamp,
+                            syncKind: event.syncKind,
+                        },
+                    },
+                });
+                await this.sqsTransitionService.completeMessageDedupe(dedupeKey);
+                results.push({
+                    from: event.from,
+                    messageId: event.messageId,
+                    syncKind: event.syncKind,
+                    role: event.role,
+                    synced: true,
+                });
+            }
+            catch (error) {
+                await this.sqsTransitionService.failMessageDedupe(dedupeKey, error);
+                (0, observability_1.logEvent)('error', 'whatsapp.sync.failed', {
+                    flowId,
+                    agentId: flowRecord?.agentId,
+                    conversationId,
+                    provider: event.provider,
+                    providerMessageId: event.messageId,
+                    syncKind: event.syncKind,
+                    error: (0, observability_1.getErrorDetails)(error),
+                });
+                throw error;
+            }
+        }
+        return results;
     }
     getAssistantText(messages) {
         return messages
@@ -14043,8 +14313,18 @@ let RunnerService = class RunnerService {
         const versionInfo = await this.canvasFlowService.resolveFlowVersionAsync(flowRecord, payload?.flowVersion || payload?.version || releaseFlowVersion);
         const config = await this.resolveRuntimeFlowConfig(versionInfo.config, flowRecord?.agentId, flowRecord?.organizationId);
         const messages = await this.extractWhatsappMessages(payload, config, String(flowRecord?._id || flowId));
+        const syncEvents = await this.extractWhatsappSyncEvents(payload, config);
+        const syncResults = syncEvents.length
+            ? await this.persistWhatsappSyncEvents(flowRecord, String(flowRecord?._id || flowId), syncEvents)
+            : [];
         if (!messages.length) {
-            return { ok: true, received: 0, ignored: true };
+            return {
+                ok: true,
+                received: 0,
+                synced: syncResults.length,
+                syncResults,
+                ignored: syncResults.length === 0,
+            };
         }
         const results = [];
         for (const message of messages) {
@@ -14228,6 +14508,8 @@ let RunnerService = class RunnerService {
         return {
             ok: true,
             received: messages.length,
+            synced: syncResults.length,
+            syncResults,
             results,
         };
     }

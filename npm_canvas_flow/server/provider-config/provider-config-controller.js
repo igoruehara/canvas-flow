@@ -33,6 +33,10 @@ let ProviderConfigController = class ProviderConfigController {
         const user = await this.assertAuth(authorization, headerToken, xApiKey);
         return await this.service.updateSettings(body?.settings || body || {}, user?.id, body?.agentId || agentId);
     }
+    async completeWhatsappEmbeddedSignup(body, agentId, authorization, headerToken, xApiKey) {
+        const user = await this.assertAuth(authorization, headerToken, xApiKey);
+        return await this.service.completeWhatsappEmbeddedSignup(body || {}, user?.id, body?.agentId || agentId);
+    }
     async clearConfigSection(section, agentId, authorization, headerToken, xApiKey) {
         const user = await this.assertAuth(authorization, headerToken, xApiKey);
         return await this.service.clearSection(section, user?.id, agentId);
@@ -60,6 +64,17 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], ProviderConfigController.prototype, "updateConfig", null);
+__decorate([
+    (0, common_1.Post)('whatsapp/embedded-signup'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Query)('agentId')),
+    __param(2, (0, common_1.Headers)('authorization')),
+    __param(3, (0, common_1.Headers)('x-canvas-flow-token')),
+    __param(4, (0, common_1.Headers)('x-api-key')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], ProviderConfigController.prototype, "completeWhatsappEmbeddedSignup", null);
 __decorate([
     (0, common_1.Delete)(':section'),
     __param(0, (0, common_1.Param)('section')),

@@ -49,6 +49,14 @@ let RagService = RagService_1 = class RagService {
         return Boolean(String(settings.milvus?.token || '').trim() ||
             (String(settings.milvus?.username || '').trim() && String(settings.milvus?.password || '').trim()));
     }
+    normalizeSettingsAgentId(agentId) {
+        const normalized = agentId === undefined || agentId === null ? '' : String(agentId).trim();
+        return normalized || undefined;
+    }
+    resolveDocumentsSettingsAgentId(documents = [], options = {}) {
+        return this.normalizeSettingsAgentId(options?.agentId ??
+            documents.find((document) => this.normalizeSettingsAgentId(document?.agentId))?.agentId);
+    }
     applyProviderSettings(settings) {
         this.runtimeSettings = settings;
         this.openAIRuntimeConfig = this.providerConfigService.toOpenAIRuntimeConfig(settings);
@@ -89,8 +97,8 @@ let RagService = RagService_1 = class RagService {
                 .getContainerClient(settings.azureBlob.containerName);
         }
     }
-    async refreshProviderSettings() {
-        const settings = await this.providerConfigService.getEffectiveSettings();
+    async refreshProviderSettings(agentId) {
+        const settings = await this.providerConfigService.getEffectiveSettings(this.normalizeSettingsAgentId(agentId));
         const signature = JSON.stringify(settings);
         if (signature !== this.providerSignature) {
             this.applyProviderSettings(settings);
@@ -1039,17 +1047,22 @@ let RagService = RagService_1 = class RagService {
         const azureSearch = azureSearchConfigured ? await this.createAzureSearchIndex(targetCollection) : null;
         return { collectionName: targetCollection, dense, sparse, azureSearch };
     }
-    async embeddingCreate(text, provider, model) {
-        const vectors = await this.embeddingCreateBatch([text], provider, model);
+    async embeddingCreate(text, provider, model, agentId) {
+        const vectors = await this.embeddingCreateBatch([text], provider, model, agentId);
         return vectors[0];
     }
-    async embeddingCreateBatch(texts, provider, model) {
-        await this.refreshProviderSettings();
+    async embeddingCreateBatch(texts, provider, model, agentId) {
+        await this.refreshProviderSettings(agentId);
         const cleanTexts = (texts || []).map((text) => String(text || ''));
         if (!cleanTexts.length)
             return [];
         const normalizedProvider = this.normalizeOpenAIProvider(provider);
-        const embeddingProvider = normalizedProvider === 'azure' || normalizedProvider === 'openai' ? provider : 'openai';
+        const normalizedEffectiveProvider = this.normalizeOpenAIProvider(this.runtimeSettings?.llmProvider);
+        const embeddingProvider = normalizedProvider === 'azure' || normalizedProvider === 'openai'
+            ? normalizedProvider
+            : normalizedEffectiveProvider === 'azure' || normalizedEffectiveProvider === 'openai'
+                ? normalizedEffectiveProvider
+                : 'openai';
         const client = this.getOpenAIClientForProvider(embeddingProvider);
         const embeddingModel = this.getEmbeddingModelForProvider(embeddingProvider, model);
         const response = await this.withTransientRetry('embedding batch', () => client.embeddings.create({
@@ -1252,7 +1265,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async uploadChunksToAzureBlob(params) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(params?.agentId);
         if (!this.azureBlobContainer) {
             throw new common_1.BadRequestException('Azure Blob Storage nao esta configurado.');
         }
@@ -1288,7 +1301,7 @@ let RagService = RagService_1 = class RagService {
             });
         }
         for (const batch of this.chunkArray(rows, embeddingBatchSize)) {
-            const vectors = await this.embeddingCreateBatch(batch.map((row) => row.text), params?.embeddingProvider, params?.embeddingModel);
+            const vectors = await this.embeddingCreateBatch(batch.map((row) => row.text), params?.embeddingProvider, params?.embeddingModel, params?.agentId);
             vectors.forEach((vector, index) => {
                 batch[index].dense = vector;
             });
@@ -1304,7 +1317,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async listAzureBlobDocuments(prefix = '', options = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(options?.agentId);
         if (!this.azureBlobContainer) {
             throw new common_1.BadRequestException('Azure Blob Storage nao esta configurado.');
         }
@@ -1659,7 +1672,7 @@ let RagService = RagService_1 = class RagService {
         if (!this.isAzureSearchConfigured(collectionName)) {
             return { results: [], warning: 'Azure AI Search is not configured' };
         }
-        const denseVector = await this.embeddingCreate(query, params?.embeddingProvider, params?.embeddingModel);
+        const denseVector = await this.embeddingCreate(query, params?.embeddingProvider, params?.embeddingModel, agentId);
         const topK = this.clampSearchInt(params?.k ?? params?.topK, 15, 1, 100);
         const candidateTopK = this.clampSearchInt(params?.candidateTopK, Math.max(topK, topK * 4), topK, 200);
         const endpoint = this.getAzureSearchEndpoint();
@@ -1830,7 +1843,8 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async addDocuments(collectionName, documents, options = {}) {
-        await this.refreshProviderSettings();
+        const settingsAgentId = this.resolveDocumentsSettingsAgentId(documents, options);
+        await this.refreshProviderSettings(settingsAgentId);
         const targetCollection = collectionName || this.getDefaultCollectionName();
         const azureSearchConfigured = this.isAzureSearchConfigured(targetCollection);
         const requestedSearchProvider = String(options?.searchProvider || options?.vectorProvider || options?.provider || options?.ragProvider || '').toLowerCase();
@@ -1912,7 +1926,7 @@ let RagService = RagService_1 = class RagService {
             };
         }
         for (const batch of this.chunkArray(rows, embeddingBatchSize)) {
-            const vectors = await this.embeddingCreateBatch(batch.map((row) => row.text), options?.embeddingProvider, options?.embeddingModel);
+            const vectors = await this.embeddingCreateBatch(batch.map((row) => row.text), options?.embeddingProvider, options?.embeddingModel, settingsAgentId);
             vectors.forEach((vector, index) => {
                 batch[index].dense = vector;
             });
@@ -2190,7 +2204,7 @@ let RagService = RagService_1 = class RagService {
         return { text: '', strategy: 'none', errors };
     }
     async extractFiles(files, body = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(body?.agentId);
         if (!files?.length) {
             throw new common_1.BadRequestException('arquivos is required');
         }
@@ -2253,7 +2267,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async addDocumentsFromFiles(files, body = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(body?.agentId);
         if (!files?.length) {
             throw new common_1.BadRequestException('arquivos is required');
         }
@@ -2303,7 +2317,10 @@ let RagService = RagService_1 = class RagService {
                 files: extractedFiles,
             });
         }
-        const added = await this.addDocuments(collectionName, documents, options);
+        const added = await this.addDocuments(collectionName, documents, {
+            ...options,
+            agentId: options?.agentId ?? body?.agentId,
+        });
         return {
             ...added,
             collectionName,
@@ -2312,7 +2329,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async listDocuments(collectionName, agentId, query, options = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(agentId ?? options?.agentId);
         if (!this.milvusClient) {
             throw new common_1.BadRequestException('MILVUS_ADDRESS is not configured');
         }
@@ -2343,7 +2360,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async getDocument(collectionName, idOrEmbeddingId, agentId) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(agentId);
         const targetCollection = collectionName || this.getDefaultCollectionName();
         const rows = await this.queryRows(targetCollection, this.buildDocumentExpr(idOrEmbeddingId, agentId), 1000, 0);
         const document = this.groupDocumentRows(rows)[0];
@@ -2356,7 +2373,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async deleteDocument(collectionName, idOrEmbeddingId, agentId) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(agentId);
         if (!this.milvusClient) {
             throw new common_1.BadRequestException('MILVUS_ADDRESS is not configured');
         }
@@ -2375,7 +2392,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async updateDocument(collectionName, idOrEmbeddingId, payload = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(payload?.agentId);
         const targetCollection = collectionName || this.getDefaultCollectionName();
         const existing = await this.getDocument(targetCollection, idOrEmbeddingId, payload?.agentId);
         const document = existing.document;
@@ -2455,7 +2472,7 @@ let RagService = RagService_1 = class RagService {
         };
     }
     async searchHybrid(query, collectionName, agentId, params = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(agentId);
         if (!query || typeof query !== 'string') {
             throw new common_1.BadRequestException('query is required');
         }
@@ -2506,7 +2523,7 @@ let RagService = RagService_1 = class RagService {
         const hasPerRoundLimits = Boolean(perRoundLimitValues?.some((value) => value !== null));
         const roundStopFind = params?.roundStopFind !== false;
         const roundMixHalf = params?.roundMixHalf === true;
-        const denseVector = await this.embeddingCreate(query, params?.embeddingProvider, params?.embeddingModel);
+        const denseVector = await this.embeddingCreate(query, params?.embeddingProvider, params?.embeddingModel, agentId);
         this.ensureVectorDimensions(denseVector, this.getEmbeddingDimensions(), 'Milvus/dense');
         const buildExpr = (extraFieldsFilter) => {
             const exprParts = [];
@@ -2718,7 +2735,7 @@ let RagService = RagService_1 = class RagService {
         return completion?.choices?.[0]?.message?.content || '';
     }
     async chatLlmRag(text, agentId, params = {}) {
-        await this.refreshProviderSettings();
+        await this.refreshProviderSettings(agentId);
         if (!text || typeof text !== 'string') {
             throw new common_1.BadRequestException('text is required');
         }
@@ -2729,7 +2746,6 @@ let RagService = RagService_1 = class RagService {
         const searchAgentId = Object.prototype.hasOwnProperty.call(params || {}, 'ragAgentId')
             ? params.ragAgentId
             : agentId;
-        const model = this.getChatModelForProvider(params?.llmProvider, params?.model);
         const prompt = params?.prompt ||
             'Você é uma IA RAG. Responda em pt-BR, use o contexto quando relevante e seja objetivo.';
         const history = await this.memoryService.findRecent(agentId, conversationId, turnHistoricMessages);
@@ -2746,6 +2762,9 @@ let RagService = RagService_1 = class RagService {
                     warning: error?.message || String(error),
                 }))
                 : { results: [] };
+        await this.refreshProviderSettings(agentId);
+        const model = this.getChatModelForProvider(params?.llmProvider, params?.model);
+        const chatClient = this.getOpenAIClientForProvider(params?.llmProvider);
         const docsContextText = (ragResults.results || [])
             .map((item, index) => {
             const extra = {
@@ -2803,7 +2822,7 @@ let RagService = RagService_1 = class RagService {
             metadata: { source: 'canvas-flow' },
         });
         for (let step = 0; step < 4; step += 1) {
-            const completion = await this.getOpenAIClientForProvider(params?.llmProvider).chat.completions.create({
+            const completion = await chatClient.chat.completions.create({
                 model,
                 messages,
                 tools: tools,

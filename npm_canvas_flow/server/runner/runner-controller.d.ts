@@ -1006,11 +1006,15 @@ export declare class RunnerController {
     } | {
         ok: boolean;
         received: number;
+        synced: number;
+        syncResults: any[];
         ignored: boolean;
         results?: undefined;
     } | {
         ok: boolean;
         received: any;
+        synced: number;
+        syncResults: any[];
         results: any[];
         ignored?: undefined;
     }>;
@@ -1033,11 +1037,15 @@ export declare class RunnerController {
     } | {
         ok: boolean;
         received: number;
+        synced: number;
+        syncResults: any[];
         ignored: boolean;
         results?: undefined;
     } | {
         ok: boolean;
         received: any;
+        synced: number;
+        syncResults: any[];
         results: any[];
         ignored?: undefined;
     }>;

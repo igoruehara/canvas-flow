@@ -42,6 +42,8 @@ export declare class AuthService implements OnModuleInit {
     getConfig(): Promise<{
         loginRequired: boolean;
         hasUsers: boolean;
+        apiToken: string;
+        apiTokenConfigured: boolean;
     }>;
     private createOwnerSession;
     bootstrap(body: any): Promise<{

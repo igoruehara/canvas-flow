@@ -219,6 +219,21 @@ npx @igoruehara/canvas-flow@latest --home C:\canvas-flow-data --open
 
 Tambem e possivel configurar provedores pela propria aplicacao depois que ela estiver rodando. Nesse caso, a configuracao fica salva no MongoDB.
 
+## WhatsApp Oficial E Open Source
+
+O onboarding da Meta tem dois modos principais:
+
+- **Sinergy gerenciado / Coexistence**: usa o preset da Sinergy. Funciona quando
+  o onboarding roda por uma URL fixa da Sinergy ou por dominios autorizados no
+  app Meta da Sinergy.
+- **Self-hosted / app Meta proprio**: use quando cada usuario hospeda o Canvas
+  Flow no proprio dominio. O usuario precisa informar o proprio App ID,
+  Configuration ID e App Secret, alem de cadastrar o dominio HTTPS/redirect URI
+  no app Meta dele.
+
+Use o modo manual quando o cliente ja tiver WABA ID, Phone Number ID e access
+token existentes.
+
 `providers.milvus`: opcional para RAG com Milvus/Zilliz. Milvus local via Docker pode rodar sem token. Milvus remoto normalmente precisa de `token` ou `username/password`.
 
 ```json

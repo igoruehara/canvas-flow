@@ -35,6 +35,8 @@ export declare class RagService implements OnModuleInit {
     constructor(configService: ConfigService, memoryService: MemoryService, httpBatchService: HttpBatchService, providerConfigService: ProviderConfigService, documentsService?: DocumentsService);
     private isLocalMilvusAddress;
     private hasMilvusCredentials;
+    private normalizeSettingsAgentId;
+    private resolveDocumentsSettingsAgentId;
     private applyProviderSettings;
     private refreshProviderSettings;
     onModuleInit(): Promise<void>;
@@ -112,8 +114,8 @@ export declare class RagService implements OnModuleInit {
         sparse: any;
         azureSearch: any;
     }>;
-    embeddingCreate(text: string, provider?: string, model?: string): Promise<any>;
-    embeddingCreateBatch(texts: string[], provider?: string, model?: string): Promise<any[]>;
+    embeddingCreate(text: string, provider?: string, model?: string, agentId?: string): Promise<any>;
+    embeddingCreateBatch(texts: string[], provider?: string, model?: string, agentId?: string): Promise<any[]>;
     private toAzureSafeId;
     private escapeODataString;
     private isAzureFilterable;

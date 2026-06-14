@@ -1,4 +1,4 @@
-import type { CanvasFlowAgentRecord, CanvasFlowAgentReleaseRecord, CanvasFlowAgentWorkspace, CanvasFlowApiKeyRecord, CanvasFlowAuthUser, CanvasFlowProviderSettings, CanvasFlowRecord, CreatedCanvasFlowApiKey, FlowConfig, TestMessage } from '../types/flow';
+import type { CanvasFlowAgentRecord, CanvasFlowAgentReleaseRecord, CanvasFlowAgentWorkspace, CanvasFlowApiKeyRecord, CanvasFlowAuthUser, CanvasFlowProviderSettings, CanvasFlowRecord, CreatedCanvasFlowApiKey, FlowConfig, ProviderConfigApiResponse, TestMessage } from '../types/flow';
 
 const RAW_API_URL = import.meta.env.VITE_CANVAS_FLOW_API_URL;
 const API_URL = RAW_API_URL === '__CANVAS_FLOW_SAME_ORIGIN__'
@@ -27,17 +27,6 @@ export type LangGraphRuntimeSummary = {
   recovered: boolean;
   status: string;
 };
-type ProviderConfigApiResponse = {
-  settings: CanvasFlowProviderSettings;
-  secretStatus: Record<string, boolean>;
-  providerStatus?: Record<string, {
-    configured: boolean;
-    source: 'agent' | 'global' | 'env' | 'none';
-    scopeConfigured: boolean;
-    inherited: boolean;
-  }>;
-};
-
 export type McpOAuthStatus = {
   connected: boolean;
   status: 'pending' | 'connected' | 'error';
@@ -202,6 +191,14 @@ export const canvasApi = {
     return request<ProviderConfigApiResponse>(`/api/provider-config/${encodeURIComponent(section)}${queryString({ agentId: options?.agentId })}`, {
       method: 'DELETE',
       headers: authHeaders(),
+    });
+  },
+
+  completeWhatsappEmbeddedSignup(payload: Record<string, unknown>, options?: { agentId?: string }) {
+    return request<ProviderConfigApiResponse>(`/api/provider-config/whatsapp/embedded-signup${queryString({ agentId: options?.agentId })}`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ ...payload, agentId: options?.agentId }),
     });
   },
 
