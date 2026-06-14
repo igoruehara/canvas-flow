@@ -25,3 +25,6 @@ tmp-*.log
 tmp/
 **/tmp/
 *.tgz
+
+# Claude Code — config local/pessoal (por dev)
+.claude/settings.local.json
