@@ -4,7 +4,7 @@ on:
   # Estágio 1 — revisão automática quando o PR abre / sai de rascunho
   pull_request:
     types: [opened, reopened, ready_for_review]
-  # Estágio 2 — corrige quando alguém comenta "@claude ..." no PR
+  # Estágio 2 — corrige quando alguém comenta "/fix ..." no PR
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -57,11 +57,11 @@ jobs:
             estilo cobertas por lint. Poste como um review do PR com comentários
             inline e, no fim, um resumo curto em português.
 
-  # ── Estágio 2: correção sob demanda (@claude) ──────────────────────────────
+  # ── Estágio 2: correção sob demanda (/fix) ─────────────────────────────────
   fix:
     name: Correção sob demanda
     # roda em comentário de PR (issue_comment só dispara se for PR) ou em
-    # comentário inline de review. A própria ação valida o gatilho "@claude"
+    # comentário inline de review. A própria ação valida o gatilho "/fix"
     # e exige que quem comentou tenha permissão de escrita no repo.
     if: >
       (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
@@ -77,5 +77,5 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          trigger_phrase: '@claude'
+          trigger_phrase: '/fix'
           claude_args: '--model claude-opus-4-8'
