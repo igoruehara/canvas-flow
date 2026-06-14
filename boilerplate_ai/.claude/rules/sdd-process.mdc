@@ -1,0 +1,33 @@
+---
+description: How change happens — spec before code, atomic commits, no scope creep, session hygiene. Apply to every task.
+globs:
+alwaysApply: true
+---
+
+# SDD Process Rules
+
+Rationale: [01-sdd-loop.md](../../docs/workflows/01-sdd-loop.md). Engine: the `tlc-spec-driven` skill.
+(Always-on rule — kept light; pull the doc on demand instead of force-loading it every turn.)
+
+## Order
+
+- New project → run **Discovery** first ([00-discovery.md](../../docs/workflows/00-discovery.md)).
+- Every feature → `Specify → (Design) → (Tasks) → Execute → Validate`, depth auto-sized.
+- Trivial change → Quick Mode (still: one-line task + verify + commit).
+
+## Hard rules
+
+- **Spec before code.** No non-trivial change without a spec/task carrying a traceable requirement id.
+- **One task = one atomic commit** (Conventional Commits). Verify "Done when" criteria *before* committing.
+- **No scope creep.** Touch only files the task names. Out-of-task ideas → `STATE.md` Deferred + roadmap parking lot.
+- **Respect architecture** (`architecture.mdc`) — never break a boundary to finish faster.
+- **AI changes ship with evals** (`ai-guardrails.mdc`).
+
+## Traceability
+
+- spec id → task → commit must form a chain. Validation checks which requirement ids are verified.
+
+## Session hygiene
+
+- `Pause work` before stopping (writes `HANDOFF.md`); `Resume work` to continue.
+- Keep loaded context lean (target < 40k tokens); load specs/design/tasks on demand, never multiple feature specs at once.

@@ -1,0 +1,81 @@
+name: Claude
+
+on:
+  # Estágio 1 — revisão automática quando o PR abre / sai de rascunho
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  # Estágio 2 — corrige quando alguém comenta "@claude ..." no PR
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+# write em contents/PR pra ela commitar a correção no branch do PR
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Estágio 1: revisão automática ──────────────────────────────────────────
+  review:
+    name: Revisão automática
+    # só PR do próprio repo (forks não têm acesso ao secret) e não-rascunho
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Revisar PR com Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: '--model claude-opus-4-8'
+          prompt: |
+            Você é o revisor deste pull request. Leia o diff completo do PR.
+
+            Contexto do projeto a seguir OBRIGATORIAMENTE:
+            - Skills em .claude/skills/ (princípios de código, padrões do projeto).
+            - Documentação em docs/ (ex.: docs/workflows/release.md).
+            - É um monorepo: backend/, frontend/ e npm_canvas_flow/.
+
+            Aponte apenas o que importa: bugs, regressões, riscos de segurança,
+            quebras de contrato/API e simplificações objetivas. Cite sempre
+            arquivo:linha. Não comente o que já está correto nem questões de
+            estilo cobertas por lint. Poste como um review do PR com comentários
+            inline e, no fim, um resumo curto em português.
+
+  # ── Estágio 2: correção sob demanda (@claude) ──────────────────────────────
+  fix:
+    name: Correção sob demanda
+    # roda em comentário de PR (issue_comment só dispara se for PR) ou em
+    # comentário inline de review. A própria ação valida o gatilho "@claude"
+    # e exige que quem comentou tenha permissão de escrita no repo.
+    if: >
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
+      github.event_name == 'pull_request_review_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Aplicar correções com Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          trigger_phrase: '@claude'
+          claude_args: '--model claude-opus-4-8'

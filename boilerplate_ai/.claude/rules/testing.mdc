@@ -1,0 +1,36 @@
+---
+description: Test pyramid, port fakes, and the E2E gate. Apply when writing or changing tests, or any feature that needs verification.
+globs: "**/*.test.*", "**/*.spec.*", qa/**
+alwaysApply: false
+---
+
+# Testing Rules
+
+> **Auto-attached rationale:** @docs/workflows/03-qa-e2e.md
+> (loads with this rule whenever you edit test files)
+
+## Pyramid (respect the proportions)
+
+- **Many** unit/use-case tests — fast, deterministic, ports replaced by fakes.
+- **Some** integration tests — adapters against real boundaries.
+- **Few** E2E (Playwright) — only critical user journeys.
+
+Never invert it. E2E is expensive; reserve it for "if broken, the product is broken" paths.
+
+## Rules
+
+- Test behavior, not implementation. One focus per test.
+- Every port has an in-memory **fake**; use it for unit/use-case tests.
+- E2E selectors: `getByRole`/`getByText`, not brittle CSS/XPath.
+- Tests are independent and idempotent — no shared mutable state, no order dependence.
+- A user-visible bug fix ships with a regression test.
+
+## AI in tests
+
+- Use the **fake `AiProvider`** in unit and E2E — never a live model in CI.
+- AI output *quality* is covered by evals ([evaluations.md](../../docs/ai/evaluations.md)), not E2E. E2E checks wiring only.
+
+## Gate
+
+- CI runs lint + unit + E2E smoke. Merge is blocked on red. Don't skip or weaken a test to go green —
+  fix the cause.

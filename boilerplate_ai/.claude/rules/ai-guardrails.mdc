@@ -1,0 +1,43 @@
+---
+description: Guardrails for any AI/model usage — provider isolation, prompts, evals, output handling, and the no-fabrication rule.
+globs: "**/ai/**", "**/prompts/**", qa/evals/**
+alwaysApply: false
+---
+
+# AI Guardrails
+
+> **Auto-attached rationale:** @docs/ai/integration-plan.md · @docs/ai/evaluations.md
+> (load with this rule whenever you touch AI code, prompts, or evals)
+
+## Isolation
+
+- Model SDK calls live **only** in `infrastructure/ai/`. Use-cases use the `AiProvider` port.
+- A deterministic `fake` adapter must exist and be the default in tests/evals.
+
+## Models
+
+- Pin exact model ids in **config**, never hardcoded in logic.
+- Match capability to task: a top model for hard reasoning; a faster/cheaper one for light, high-volume calls.
+- Default to the latest capable Claude models. **Verify current model ids, context windows, and pricing
+  against live docs** before committing — do not trust memory.
+
+## Prompts
+
+- Prompts are versioned artifacts with: purpose, input contract, model, expected output shape, golden examples.
+- No prompt scattered as inline literals across business code.
+- Changing a prompt = changing behavior → update evals and ship green.
+
+## Output handling
+
+- Treat model output as **untrusted input**: validate/parse at the boundary.
+- Every AI call: timeout + fallback path + observability (model id, tokens, latency, cost).
+
+## No fabrication (applies to the agent itself)
+
+- Follow the Knowledge Verification Chain: codebase → docs → Context7 MCP → web → flag uncertain.
+- Never invent an API, flag, or behavior. If you can't verify, say "I don't know". Fabrication cascades
+  through design → tasks → code.
+
+## Gate
+
+A capability ships only when: port + fake exist, evals pass, observability wired, fallback defined.
