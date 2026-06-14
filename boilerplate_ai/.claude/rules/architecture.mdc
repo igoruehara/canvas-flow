@@ -1,0 +1,37 @@
+---
+description: Layer boundaries and dependency direction. Apply to every code change. AI is a port, never called from UI or domain.
+globs: src/**, app/**, lib/**
+alwaysApply: false
+---
+
+# Architecture Rules
+
+> **Auto-attached rationale:** @docs/architecture/overview.md
+> (loads with this rule whenever you edit code under the globs above)
+
+## Dependency rule (hard)
+
+Dependencies point inward only: `ui → application → domain ← infrastructure`.
+
+- `domain` imports **nothing** framework-specific. Pure business logic only.
+- `application` (use-cases) imports `domain` and **ports** (interfaces) — never concrete adapters.
+- `infrastructure` implements ports; may import `domain`/`application` ports; never `ui`.
+- `ui`/`delivery` imports `application` use-cases; never `domain` internals or `infrastructure` directly.
+
+Violation = stop and refactor, or open an ADR if the boundary itself is wrong.
+
+## AI is a port
+
+- No AI/model SDK import outside `infrastructure/ai/`.
+- Use-cases depend on the `AiProvider` port, not a provider. A `fake` adapter must exist for tests/evals.
+- See [integration-plan.md](../../docs/ai/integration-plan.md).
+
+## Module structure
+
+- Group by feature/domain, not by technical type (no global `controllers/`, `models/`).
+- A module's public surface is its barrel/index; don't import internals across modules.
+
+## When in doubt
+
+Adding a dependency that points "outward" or sideways across features is the smell. If you need it,
+the design is wrong — re-check the use-case/port split before writing the import.

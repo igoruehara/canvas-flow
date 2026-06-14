@@ -1,0 +1,42 @@
+---
+description: Naming, structure, error handling, and async conventions for all source code.
+globs: src/**, app/**, lib/**, qa/**
+alwaysApply: false
+---
+
+# Coding Standards
+
+> **Auto-attached rationale:** @docs/architecture/patterns.md
+> (loads with this rule whenever you edit code under the globs above)
+
+## Naming
+
+- Files `kebab-case`; one primary export per file.
+- Types/classes `PascalCase`; functions/vars `camelCase`; constants `UPPER_SNAKE`.
+- Ports name a capability (`UserRepository`); adapters name the tech (`PostgresUserRepository`).
+
+## Functions & flow
+
+- Guard-clause early returns over nested conditionals.
+- Pure functions in `domain`; side effects only in adapters.
+- No `util`/`manager`/`helper` dumping grounds — name by behavior.
+
+## Errors
+
+- Throw typed domain errors, never bare strings; adapters translate transport/SDK errors into domain errors.
+- Never swallow errors silently. If recovery is intended, comment why.
+
+## Async & data
+
+- `async/await` only — no mixed `.then()` chains.
+- Validate external input at the boundary (schema). Trust nothing crossing a process edge.
+- Immutability by default.
+
+## Comments
+
+- Match the surrounding file's density and style. Explain *why*, not *what*.
+- No TODOs without an owner or a tracked task.
+
+## Commits
+
+- Conventional Commits 1.0.0; one task = one commit; imperative subject.

@@ -1,0 +1,33 @@
+---
+description: Index of project rules and how they relate to the docs. Read this to know which rule governs what.
+globs:
+alwaysApply: true
+---
+
+# Rules Index
+
+These `.mdc` files are the **enforced** layer. The reasoning behind each lives in [docs/](../../docs/).
+When a rule and a doc disagree, the rule wins for behavior — but open an ADR to reconcile them.
+
+**Loading strategy (context economy):**
+- **Code rules** are *glob-scoped* (`alwaysApply: false`) and `@`-attach their rationale doc — so the doc loads **only when you edit matching files**, not every turn.
+- **Process rules** are *always-on* and link their doc — pulled on demand, never force-loaded.
+
+| Rule | Governs | Loads | Rationale doc |
+|---|---|---|---|
+| [architecture.mdc](architecture.mdc) | layer boundaries, dependency direction, AI-as-a-port | on code globs | [overview.md](../../docs/architecture/overview.md) |
+| [coding-standards.mdc](coding-standards.mdc) | naming, structure, errors, async | on code globs | [patterns.md](../../docs/architecture/patterns.md) |
+| [testing.mdc](testing.mdc) | test pyramid, fakes, E2E gate | on test globs | [03-qa-e2e.md](../../docs/workflows/03-qa-e2e.md) |
+| [ai-guardrails.mdc](ai-guardrails.mdc) | model calls, prompts, evals, no-fabrication | on AI globs | [ai/](../../docs/ai/) |
+| [sdd-process.mdc](sdd-process.mdc) | spec-before-code, atomic commits, scope | always-on | [01-sdd-loop.md](../../docs/workflows/01-sdd-loop.md) |
+
+## Precedence
+
+1. `architecture.mdc` (boundaries) — highest; never violate to satisfy a lower rule.
+2. `sdd-process.mdc` (how change happens).
+3. `coding-standards.mdc`, `testing.mdc`, `ai-guardrails.mdc` (how code looks/behaves).
+
+## How an agent uses these
+
+Read [AGENTS.md](../../AGENTS.md) → then the relevant rule for the task at hand. Rules are short on
+purpose; the docs carry the examples and the *why*.

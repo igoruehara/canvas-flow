@@ -146,7 +146,7 @@ Ver o caminho da config:
 npx @igoruehara/canvas-flow@latest config
 ```
 
-Ver a config no terminal:
+Ver a config. no terminal:
 
 ```bash
 npx @igoruehara/canvas-flow@latest config --show
