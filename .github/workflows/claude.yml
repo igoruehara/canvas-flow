@@ -1,37 +1,43 @@
 name: Claude
 
 on:
-  # Estágio 1 — revisão automática quando o PR abre / sai de rascunho
+  # Estágio 1 — revisão automática: na abertura do PR e em cada push novo
   pull_request:
-    types: [opened, reopened, ready_for_review]
-  # Estágio 2 — corrige quando alguém comenta "@claude ..." no PR
+    types: [opened, reopened, ready_for_review, synchronize]
+  # Estágio 2/3 — comentários: "/claude ..." (discutir) e "/fix ..." (corrigir)
   issue_comment:
     types: [created]
   pull_request_review_comment:
     types: [created]
 
-# write em contents/PR pra ela commitar a correção no branch do PR
+# Permissão padrão mínima; cada job amplia o que precisa.
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
   issues: write
   id-token: write
   actions: read
 
 concurrency:
-  group: claude-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  group: claude-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
-  # ── Estágio 1: revisão automática ──────────────────────────────────────────
+  # ── Estágio 1: revisão automática contra o DoD ─────────────────────────────
   review:
     name: Revisão automática
-    # só PR do próprio repo (forks não têm acesso ao secret) e não-rascunho
+    # só PR do próprio repo (forks não acessam o secret) e não-rascunho
     if: >
       github.event_name == 'pull_request' &&
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    permissions:
+      contents: read          # revisão não commita
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -44,29 +50,64 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: '--model claude-opus-4-8'
           prompt: |
-            Você é o revisor deste pull request. Leia o diff completo do PR.
+            Revise este pull request seguindo a skill `.claude/skills/code-review/SKILL.md`
+            (leia o arquivo e siga o passo a passo dela).
 
-            Contexto do projeto a seguir OBRIGATORIAMENTE:
-            - Skills em .claude/skills/ (princípios de código, padrões do projeto).
-            - Documentação em docs/ (ex.: docs/workflows/release.md).
-            - É um monorepo: backend/, frontend/ e npm_canvas_flow/.
+            Em resumo: leia `AGENTS.md`, descubra a feature/tarefa do PR e abra
+            `.specs/features/<feature>/spec.md` (Acceptance Criteria = o DoD),
+            `tasks.md` (gates), `.specs/codebase/` (CONVENTIONS, CONCERNS, TESTING)
+            e a `docs/` relevante. Verifique o diff contra o DoD, bugs, segurança e
+            convenções.
 
-            Aponte apenas o que importa: bugs, regressões, riscos de segurança,
-            quebras de contrato/API e simplificações objetivas. Cite sempre
-            arquivo:linha. Não comente o que já está correto nem questões de
-            estilo cobertas por lint. Poste como um review do PR com comentários
-            inline e, no fim, um resumo curto em português.
+            Poste comentários inline citando `arquivo:linha` com severidade
+            (`bloqueante`/`importante`/`nit`) e, no fim, SEMPRE um resumo em
+            português com o checklist do DoD (✅ atendido / ⚠️ parcial / ❌ não
+            atendido por critério). Se o diff estiver limpo, diga explicitamente
+            que está consistente com o DoD.
 
-  # ── Estágio 2: correção sob demanda (@claude) ──────────────────────────────
-  fix:
-    name: Correção sob demanda
-    # roda em comentário de PR (issue_comment só dispara se for PR) ou em
-    # comentário inline de review. A própria ação valida o gatilho "@claude"
-    # e exige que quem comentou tenha permissão de escrita no repo.
+  # ── Estágio 2: discussão sob demanda (/claude) — RESPONDE, não commita ──────
+  discuss:
+    name: Discussão (/claude)
     if: >
-      (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
-      github.event_name == 'pull_request_review_comment'
+      ((github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
+       github.event_name == 'pull_request_review_comment') &&
+      contains(github.event.comment.body, '/claude')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read          # modo discussão: SEM permissão de commit
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Responder/discutir com Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          trigger_phrase: '/claude'
+          claude_args: >-
+            --model claude-opus-4-8
+            --append-system-prompt "Você está em MODO DISCUSSÃO. Apenas responda e refine a proposta no comentário do PR, seguindo a skill .claude/skills/code-review/SKILL.md. NUNCA edite arquivos nem faça commit — a aplicação só acontece depois quando o usuário comentar /fix."
+
+  # ── Estágio 3: correção sob demanda (/fix) — APLICA e commita ───────────────
+  fix:
+    name: Correção (/fix)
+    if: >
+      ((github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
+       github.event_name == 'pull_request_review_comment') &&
+      contains(github.event.comment.body, '/fix')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write         # pode commitar a correção no branch do PR
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -77,5 +118,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          trigger_phrase: '@claude'
-          claude_args: '--model claude-opus-4-8'
+          trigger_phrase: '/fix'
+          claude_args: >-
+            --model claude-opus-4-8
+            --append-system-prompt "Aplique as correções pedidas seguindo a skill .claude/skills/code-review/SKILL.md e o DoD em .specs/. Considere a proposta já discutida nos comentários anteriores do PR. Edite os arquivos e faça commit no branch do PR."
