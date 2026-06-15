@@ -32,6 +32,7 @@ jobs:
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 15       # teto de 15 min para a análise do diff
     permissions:
       contents: read          # revisão não commita
       pull-requests: write
@@ -45,7 +46,7 @@ jobs:
           fetch-depth: 0
 
       - name: Revisar PR com Claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: '--model claude-opus-4-8'
@@ -73,6 +74,7 @@ jobs:
        github.event_name == 'pull_request_review_comment') &&
       contains(github.event.comment.body, '/claude')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read          # modo discussão: SEM permissão de commit
       pull-requests: write
@@ -86,7 +88,7 @@ jobs:
           fetch-depth: 0
 
       - name: Responder/discutir com Claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           trigger_phrase: '/claude'
@@ -102,6 +104,7 @@ jobs:
        github.event_name == 'pull_request_review_comment') &&
       contains(github.event.comment.body, '/fix')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write         # pode commitar a correção no branch do PR
       pull-requests: write
@@ -115,7 +118,7 @@ jobs:
           fetch-depth: 0
 
       - name: Aplicar correções com Claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           trigger_phrase: '/fix'
