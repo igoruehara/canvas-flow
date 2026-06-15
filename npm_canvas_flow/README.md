@@ -134,6 +134,7 @@ C:\Users\<usuario>\.canvas-flow\config.json
 
 Esse arquivo guarda porta, MongoDB, tokens e provedores. Nao publique `config.json`: ele contem secrets gerados e chaves de API.
 
+
 Abrir a config:
 
 ```bash
