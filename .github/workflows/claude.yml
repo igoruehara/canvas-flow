@@ -52,6 +52,9 @@ jobs:
         uses: anthropics/claude-code-action@d5726de019ec4498aa667642bc3a80fca83aa102 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Em modo automação (prompt: sem @claude), é o track_progress que faz
+          # a ação PUBLICAR a review (resumo + inline) no PR em vez de rodar mudo.
+          track_progress: true
           claude_args: '--model claude-opus-4-8'
           prompt: |
             Revise este pull request seguindo a skill `.claude/skills/code-review/SKILL.md`
