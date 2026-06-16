@@ -4,7 +4,10 @@ on:
   # Estágio 1 — revisão automática: na abertura do PR e em cada push novo
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
-  # Estágio 2/3 — comentários: "/claude ..." (discutir) e "/fix ..." (corrigir)
+  # Estágio 2/3 — comandos por comentário (precisam estar NO INÍCIO do comentário):
+  #   /claude <pedido>  → discutir/refinar a proposta (NÃO commita)
+  #   /fix [instrução]  → aplicar a correção e commitar no branch do PR
+  # Menções no meio do texto (ex.: "não use /fix", path "src/fixtures") são ignoradas.
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -72,7 +75,8 @@ jobs:
     if: >
       ((github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
        github.event_name == 'pull_request_review_comment') &&
-      contains(github.event.comment.body, '/claude')
+      (startsWith(github.event.comment.body, '/claude ') ||
+       github.event.comment.body == '/claude')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -102,7 +106,8 @@ jobs:
     if: >
       ((github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
        github.event_name == 'pull_request_review_comment') &&
-      contains(github.event.comment.body, '/fix')
+      (startsWith(github.event.comment.body, '/fix ') ||
+       github.event.comment.body == '/fix')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
